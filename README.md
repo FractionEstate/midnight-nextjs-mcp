@@ -15,7 +15,7 @@ A Model Context Protocol (MCP) Server for Midnight Blockchain Development. This 
 ### NPM Global Install
 
 ```bash
-npm install -g @olanetsoft/midnight-mcp
+npm install -g midnight-mcp
 ```
 
 ### From Source
@@ -58,7 +58,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "midnight": {
       "command": "npx",
-      "args": ["-y", "@olanetsoft/midnight-mcp"],
+      "args": ["-y", "midnight-mcp"],
       "env": {
         "GITHUB_TOKEN": "your-token",
         "OPENAI_API_KEY": "your-key"
