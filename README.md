@@ -2,45 +2,44 @@
 
 MCP server that gives AI assistants access to Midnight blockchain—search contracts, analyze code, and explore documentation.
 
-## User Setup
+## Quick Start
 
-For users who want to use this MCP with Claude Desktop or Cursor.
+Add to your `claude_desktop_config.json`:
 
-### Prerequisites
+```json
+{
+  "mcpServers": {
+    "midnight": {
+      "command": "npx",
+      "args": ["-y", "midnight-mcp"]
+    }
+  }
+}
+```
 
-- [Docker](https://docker.com) installed
-- [OpenAI API key](https://platform.openai.com/api-keys)
-- GitHub token (optional, but recommended for higher rate limits)
+Restart Claude Desktop. You can now use analysis tools, prompts, and access resources.
+
+> **Note:** Search features won't work well without the full setup below.
+
+---
+
+## Full Setup (for search)
+
+To enable semantic search across Midnight contracts and docs:
 
 ### 1. Start ChromaDB
 
-ChromaDB runs locally on your machine—no account needed:
+ChromaDB is a local vector database—no account needed, just Docker:
 
 ```bash
 docker run -d -p 8000:8000 chromadb/chroma
 ```
 
-### 2. Configure your MCP client
+### 2. Get an OpenAI API key
 
-**Claude Desktop** — Add to `claude_desktop_config.json`:
+Needed for generating embeddings. Get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 
-```json
-{
-  "mcpServers": {
-    "midnight": {
-      "command": "npx",
-      "args": ["-y", "midnight-mcp"],
-      "env": {
-        "OPENAI_API_KEY": "sk-...",
-        "GITHUB_TOKEN": "ghp_...",
-        "CHROMA_URL": "http://localhost:8000"
-      }
-    }
-  }
-}
-```
-
-**Cursor** — Add to `.cursor/mcp.json`:
+### 3. Update your config
 
 ```json
 {
@@ -57,21 +56,9 @@ docker run -d -p 8000:8000 chromadb/chroma
 }
 ```
 
-### Environment Variables
+### Optional: GitHub token
 
-| Variable         | Required | Description                                            |
-| ---------------- | -------- | ------------------------------------------------------ |
-| `OPENAI_API_KEY` | Yes      | For generating embeddings                              |
-| `CHROMA_URL`     | Yes      | ChromaDB endpoint (default: `http://localhost:8000`)   |
-| `GITHUB_TOKEN`   | No       | Increases GitHub API rate limit from 60 to 5000 req/hr |
-
-### 3. Start using it
-
-Restart Claude Desktop or Cursor. Ask Claude something like:
-
-- "Search for counter contract examples in Midnight"
-- "Analyze this Compact contract for security issues"
-- "Explain how witnesses work in Midnight"
+Add `"GITHUB_TOKEN": "ghp_..."` to increase API rate limits from 60 to 5000 requests/hour.
 
 ---
 
