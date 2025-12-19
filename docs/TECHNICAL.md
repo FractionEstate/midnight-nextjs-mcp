@@ -79,8 +79,10 @@ The parser (`src/pipeline/parser.ts`) handles Midnight's Compact language:
 ```typescript
 // Regex-based extraction with position tracking
 const ledgerRegex = /ledger\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/gs;
-const circuitRegex = /(?:export\s+)?(circuit)\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?\s*\{/g;
-const witnessRegex = /(?:export\s+)?(witness)\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?\s*\{/g;
+const circuitRegex =
+  /(?:export\s+)?(circuit)\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?\s*\{/g;
+const witnessRegex =
+  /(?:export\s+)?(witness)\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?\s*\{/g;
 ```
 
 ### Extracted Metadata
@@ -90,9 +92,9 @@ interface ParsedFile {
   path: string;
   language: "compact" | "typescript" | "markdown";
   content: string;
-  codeUnits: CodeUnit[];           // Functions, circuits, witnesses
-  imports: string[];               // Include statements
-  exports: string[];               // Exported symbols
+  codeUnits: CodeUnit[]; // Functions, circuits, witnesses
+  imports: string[]; // Include statements
+  exports: string[]; // Exported symbols
   metadata: {
     hasLedger: boolean;
     hasCircuits: boolean;
@@ -123,7 +125,6 @@ Code is intelligently chunked for optimal embedding:
 1. **Code Unit Chunking** (preferred)
    - Each function/circuit/witness = one chunk
    - Preserves semantic boundaries
-   
 2. **File Chunking** (fallback)
    - 2000 character chunks
    - 5-line overlap between chunks
@@ -132,20 +133,22 @@ Code is intelligently chunked for optimal embedding:
 ```typescript
 function createChunks(file: ParsedFile, repository: string) {
   const chunks = [];
-  
+
   // Prefer code units
   for (const unit of file.codeUnits) {
     chunks.push({
       text: unit.code,
-      metadata: { /* ... */ }
+      metadata: {
+        /* ... */
+      },
     });
   }
-  
+
   // Fallback to file chunks
   if (file.codeUnits.length === 0) {
     // Sliding window chunking
   }
-  
+
   return chunks;
 }
 ```
@@ -189,7 +192,7 @@ await collection.add({
 const results = await collection.query({
   queryEmbeddings: [queryVector],
   nResults: 10,
-  where: { language: "compact" },      // Optional filter
+  where: { language: "compact" }, // Optional filter
   include: ["documents", "metadatas", "distances"],
 });
 ```
@@ -230,21 +233,21 @@ Output Report
 
 ### Detected Patterns
 
-| Pattern | Detection Method |
-|---------|------------------|
-| Access Control | `authorized()`, permission checks |
-| State Management | Ledger field analysis |
-| Privacy Preserving | Witness vs circuit ratio |
-| Token Standards | Transfer/mint/burn signatures |
+| Pattern            | Detection Method                  |
+| ------------------ | --------------------------------- |
+| Access Control     | `authorized()`, permission checks |
+| State Management   | Ledger field analysis             |
+| Privacy Preserving | Witness vs circuit ratio          |
+| Token Standards    | Transfer/mint/burn signatures     |
 
 ### Security Checks
 
-| Check | What it detects |
-|-------|----------------|
-| Unprotected circuits | Public circuits without auth |
-| State leakage | Shielded data in public returns |
-| Missing witnesses | Circuits without private computation |
-| Reentrancy patterns | Recursive calls in circuits |
+| Check                | What it detects                      |
+| -------------------- | ------------------------------------ |
+| Unprotected circuits | Public circuits without auth         |
+| State leakage        | Shielded data in public returns      |
+| Missing witnesses    | Circuits without private computation |
+| Reentrancy patterns  | Recursive calls in circuits          |
 
 ## GitHub Integration
 
@@ -255,7 +258,7 @@ Output Report
 // Without token: 60 requests/hour
 
 const octokit = new Octokit({
-  auth: config.githubToken,  // Optional
+  auth: config.githubToken, // Optional
 });
 ```
 
@@ -271,7 +274,7 @@ const DEFAULT_REPOSITORIES: RepositoryConfig[] = [
     types: ["compact", "typescript"],
   },
   {
-    owner: "midnightntwrk", 
+    owner: "midnightntwrk",
     name: "compact-compiler",
     branch: "main",
     paths: ["stdlib/", "src/"],
@@ -295,7 +298,7 @@ async function getFileContent(
     path,
     ref,
   });
-  
+
   // Decode base64 content
   return Buffer.from(response.data.content, "base64").toString("utf-8");
 }
@@ -330,12 +333,14 @@ logger.info("Tool called", {
 Logs go to **stderr** to avoid interfering with MCP's stdio communication:
 
 ```typescript
-console.error(JSON.stringify({
-  level,
-  message,
-  ...meta,
-  timestamp: new Date().toISOString(),
-}));
+console.error(
+  JSON.stringify({
+    level,
+    message,
+    ...meta,
+    timestamp: new Date().toISOString(),
+  })
+);
 ```
 
 ## Testing Strategy
@@ -357,12 +362,12 @@ describe("Contract Analysis", () => {
 
 ### Test Coverage
 
-| Module | Coverage |
-|--------|----------|
-| Parser | ~85% |
-| Analyze | ~90% |
-| Resources | ~75% |
-| Prompts | ~80% |
+| Module    | Coverage |
+| --------- | -------- |
+| Parser    | ~85%     |
+| Analyze   | ~90%     |
+| Resources | ~75%     |
+| Prompts   | ~80%     |
 
 ### Running Tests
 
@@ -410,16 +415,16 @@ for (let i = 0; i < documents.length; i += BATCH_SIZE) {
 
 ## Environment Variables Reference
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GITHUB_TOKEN` | No | - | GitHub PAT for API access |
-| `OPENAI_API_KEY` | No | - | OpenAI API key for embeddings |
-| `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB endpoint |
-| `EMBEDDING_MODEL` | No | `text-embedding-3-small` | OpenAI model |
-| `LOG_LEVEL` | No | `info` | Logging verbosity |
-| `SYNC_INTERVAL` | No | `900000` | Index refresh (ms) |
-| `DATA_DIR` | No | `./data` | Data storage path |
-| `CACHE_DIR` | No | `./cache` | Cache storage path |
+| Variable          | Required | Default                  | Description                   |
+| ----------------- | -------- | ------------------------ | ----------------------------- |
+| `GITHUB_TOKEN`    | No       | -                        | GitHub PAT for API access     |
+| `OPENAI_API_KEY`  | No       | -                        | OpenAI API key for embeddings |
+| `CHROMA_URL`      | No       | `http://localhost:8000`  | ChromaDB endpoint             |
+| `EMBEDDING_MODEL` | No       | `text-embedding-3-small` | OpenAI model                  |
+| `LOG_LEVEL`       | No       | `info`                   | Logging verbosity             |
+| `SYNC_INTERVAL`   | No       | `900000`                 | Index refresh (ms)            |
+| `DATA_DIR`        | No       | `./data`                 | Data storage path             |
+| `CACHE_DIR`       | No       | `./cache`                | Cache storage path            |
 
 ## Build & Distribution
 

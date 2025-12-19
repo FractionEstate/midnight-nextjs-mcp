@@ -40,6 +40,7 @@ The Midnight MCP Server implements the [Model Context Protocol](https://modelcon
 ### 1. Server (`src/server.ts`)
 
 The main MCP server implementation using `@modelcontextprotocol/sdk`. Handles:
+
 - Tool registration and execution
 - Resource listing and reading
 - Prompt template management
@@ -59,18 +60,19 @@ const server = new Server(SERVER_INFO, {
 
 Eight tools exposed to AI assistants:
 
-| Tool | File | Description |
-|------|------|-------------|
-| `midnight:search-compact` | search.ts | Semantic search across Compact contracts |
-| `midnight:search-typescript` | search.ts | Search TypeScript SDK code |
-| `midnight:search-docs` | search.ts | Search documentation |
-| `midnight:analyze-contract` | analyze.ts | Static analysis of Compact contracts |
-| `midnight:explain-circuit` | analyze.ts | Plain-language circuit explanations |
-| `midnight:get-file` | repository.ts | Fetch files from GitHub repos |
-| `midnight:list-examples` | repository.ts | List example contracts/DApps |
-| `midnight:get-latest-updates` | repository.ts | Recent repository changes |
+| Tool                          | File          | Description                              |
+| ----------------------------- | ------------- | ---------------------------------------- |
+| `midnight:search-compact`     | search.ts     | Semantic search across Compact contracts |
+| `midnight:search-typescript`  | search.ts     | Search TypeScript SDK code               |
+| `midnight:search-docs`        | search.ts     | Search documentation                     |
+| `midnight:analyze-contract`   | analyze.ts    | Static analysis of Compact contracts     |
+| `midnight:explain-circuit`    | analyze.ts    | Plain-language circuit explanations      |
+| `midnight:get-file`           | repository.ts | Fetch files from GitHub repos            |
+| `midnight:list-examples`      | repository.ts | List example contracts/DApps             |
+| `midnight:get-latest-updates` | repository.ts | Recent repository changes                |
 
 Each tool has:
+
 - Zod schema for input validation
 - Async handler function
 - Structured JSON output
@@ -80,6 +82,7 @@ Each tool has:
 Sixteen resources accessible via `midnight://` URIs:
 
 **Documentation** (`docs.ts`):
+
 - `midnight://docs/compact-reference`
 - `midnight://docs/sdk-api`
 - `midnight://docs/concepts/zero-knowledge`
@@ -88,6 +91,7 @@ Sixteen resources accessible via `midnight://` URIs:
 - `midnight://docs/concepts/kachina`
 
 **Code** (`code.ts`):
+
 - `midnight://code/examples/counter`
 - `midnight://code/examples/bboard`
 - `midnight://code/patterns/state-management`
@@ -97,6 +101,7 @@ Sixteen resources accessible via `midnight://` URIs:
 - `midnight://code/templates/voting`
 
 **Schemas** (`schemas.ts`):
+
 - `midnight://schema/compact-ast`
 - `midnight://schema/transaction`
 - `midnight://schema/proof`
@@ -105,13 +110,13 @@ Sixteen resources accessible via `midnight://` URIs:
 
 Five prompt templates for common development tasks:
 
-| Prompt | Purpose |
-|--------|---------|
-| `midnight:create-contract` | Guided contract creation |
-| `midnight:review-contract` | Security & best practices review |
-| `midnight:explain-concept` | Educational explanations |
-| `midnight:compare-approaches` | Implementation comparison |
-| `midnight:debug-contract` | Debug assistance |
+| Prompt                        | Purpose                          |
+| ----------------------------- | -------------------------------- |
+| `midnight:create-contract`    | Guided contract creation         |
+| `midnight:review-contract`    | Security & best practices review |
+| `midnight:explain-concept`    | Educational explanations         |
+| `midnight:compare-approaches` | Implementation comparison        |
+| `midnight:debug-contract`     | Debug assistance                 |
 
 ### 5. Pipeline (`src/pipeline/`)
 
@@ -122,6 +127,7 @@ GitHub API → Parser → Embeddings → Vector Store
 ```
 
 **Components**:
+
 - `github.ts` - Repository fetching via Octokit
 - `parser.ts` - Compact/TypeScript/Markdown parsing
 - `embeddings.ts` - OpenAI text-embedding-3-small
@@ -241,11 +247,11 @@ src/
 
 The server is designed to work with partial configuration:
 
-| Missing | Impact |
-|---------|--------|
-| OpenAI API key | Search returns dummy results |
-| ChromaDB | Search returns empty results |
-| GitHub token | Lower rate limits (60/hr vs 5000/hr) |
+| Missing        | Impact                               |
+| -------------- | ------------------------------------ |
+| OpenAI API key | Search returns dummy results         |
+| ChromaDB       | Search returns empty results         |
+| GitHub token   | Lower rate limits (60/hr vs 5000/hr) |
 
 ### Error Responses
 

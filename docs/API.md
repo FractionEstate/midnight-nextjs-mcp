@@ -7,6 +7,7 @@
 Search Compact smart contract code and patterns using semantic search.
 
 **Input Schema:**
+
 ```typescript
 {
   query: string;          // Natural language search query
@@ -19,11 +20,12 @@ Search Compact smart contract code and patterns using semantic search.
 ```
 
 **Output:**
+
 ```typescript
 {
   results: Array<{
-    content: string;      // Code snippet
-    score: number;        // Similarity score (0-1)
+    content: string; // Code snippet
+    score: number; // Similarity score (0-1)
     metadata: {
       repository: string;
       filePath: string;
@@ -41,6 +43,7 @@ Search Compact smart contract code and patterns using semantic search.
 ```
 
 **Example:**
+
 ```json
 {
   "name": "midnight:search-compact",
@@ -58,6 +61,7 @@ Search Compact smart contract code and patterns using semantic search.
 Search TypeScript SDK code, types, and API implementations.
 
 **Input Schema:**
+
 ```typescript
 {
   query: string;              // Search query
@@ -76,6 +80,7 @@ Search TypeScript SDK code, types, and API implementations.
 Full-text search across Midnight documentation.
 
 **Input Schema:**
+
 ```typescript
 {
   query: string;                              // Documentation search query
@@ -93,6 +98,7 @@ Full-text search across Midnight documentation.
 Analyze a Compact contract for structure, patterns, and security issues.
 
 **Input Schema:**
+
 ```typescript
 {
   code: string;               // Compact contract source code
@@ -102,6 +108,7 @@ Analyze a Compact contract for structure, patterns, and security issues.
 ```
 
 **Output:**
+
 ```typescript
 {
   structure: {
@@ -147,6 +154,7 @@ Analyze a Compact contract for structure, patterns, and security issues.
 ```
 
 **Example:**
+
 ```json
 {
   "name": "midnight:analyze-contract",
@@ -164,6 +172,7 @@ Analyze a Compact contract for structure, patterns, and security issues.
 Explain what a circuit does in plain language with ZK implications.
 
 **Input Schema:**
+
 ```typescript
 {
   circuitCode: string;        // Circuit code to explain
@@ -173,6 +182,7 @@ Explain what a circuit does in plain language with ZK implications.
 ```
 
 **Output:**
+
 ```typescript
 {
   summary: string;            // One-sentence summary
@@ -197,6 +207,7 @@ Explain what a circuit does in plain language with ZK implications.
 Retrieve a specific file from Midnight repositories.
 
 **Input Schema:**
+
 ```typescript
 {
   repository: string;         // Repository name (e.g., "midnight-examples")
@@ -206,14 +217,15 @@ Retrieve a specific file from Midnight repositories.
 ```
 
 **Output:**
+
 ```typescript
 {
-  content: string;            // File content
+  content: string; // File content
   path: string;
   repository: string;
   ref: string;
-  size: number;               // File size in bytes
-  encoding: string;           // Usually "utf-8"
+  size: number; // File size in bytes
+  encoding: string; // Usually "utf-8"
 }
 ```
 
@@ -224,6 +236,7 @@ Retrieve a specific file from Midnight repositories.
 List available example contracts and DApps.
 
 **Input Schema:**
+
 ```typescript
 {
   category?: "contracts" | "dapps" | "patterns" | "all";
@@ -232,6 +245,7 @@ List available example contracts and DApps.
 ```
 
 **Output:**
+
 ```typescript
 {
   examples: Array<{
@@ -254,6 +268,7 @@ List available example contracts and DApps.
 Retrieve recent changes across Midnight repositories.
 
 **Input Schema:**
+
 ```typescript
 {
   repository?: string;        // Filter by repo (optional)
@@ -263,6 +278,7 @@ Retrieve recent changes across Midnight repositories.
 ```
 
 **Output:**
+
 ```typescript
 {
   updates: Array<{
@@ -285,36 +301,37 @@ Resources are accessed via URI patterns. Use `resources/read` with the URI.
 
 ### Documentation Resources
 
-| URI | Description |
-|-----|-------------|
-| `midnight://docs/compact-reference` | Complete Compact language reference |
-| `midnight://docs/sdk-api` | TypeScript SDK API documentation |
-| `midnight://docs/concepts/zero-knowledge` | ZK proofs in Midnight |
-| `midnight://docs/concepts/shielded-state` | Shielded vs unshielded state |
-| `midnight://docs/concepts/witnesses` | How witness functions work |
-| `midnight://docs/concepts/kachina` | The Kachina protocol |
+| URI                                       | Description                         |
+| ----------------------------------------- | ----------------------------------- |
+| `midnight://docs/compact-reference`       | Complete Compact language reference |
+| `midnight://docs/sdk-api`                 | TypeScript SDK API documentation    |
+| `midnight://docs/concepts/zero-knowledge` | ZK proofs in Midnight               |
+| `midnight://docs/concepts/shielded-state` | Shielded vs unshielded state        |
+| `midnight://docs/concepts/witnesses`      | How witness functions work          |
+| `midnight://docs/concepts/kachina`        | The Kachina protocol                |
 
 ### Code Resources
 
-| URI | Description |
-|-----|-------------|
-| `midnight://code/examples/counter` | Simple counter contract |
-| `midnight://code/examples/bboard` | Bulletin board DApp |
-| `midnight://code/patterns/state-management` | State management patterns |
-| `midnight://code/patterns/access-control` | Access control patterns |
-| `midnight://code/patterns/privacy-preserving` | Privacy patterns |
-| `midnight://code/templates/token` | Token contract template |
-| `midnight://code/templates/voting` | Voting contract template |
+| URI                                           | Description               |
+| --------------------------------------------- | ------------------------- |
+| `midnight://code/examples/counter`            | Simple counter contract   |
+| `midnight://code/examples/bboard`             | Bulletin board DApp       |
+| `midnight://code/patterns/state-management`   | State management patterns |
+| `midnight://code/patterns/access-control`     | Access control patterns   |
+| `midnight://code/patterns/privacy-preserving` | Privacy patterns          |
+| `midnight://code/templates/token`             | Token contract template   |
+| `midnight://code/templates/voting`            | Voting contract template  |
 
 ### Schema Resources
 
-| URI | Description |
-|-----|-------------|
-| `midnight://schema/compact-ast` | Compact AST JSON schema |
+| URI                             | Description               |
+| ------------------------------- | ------------------------- |
+| `midnight://schema/compact-ast` | Compact AST JSON schema   |
 | `midnight://schema/transaction` | Transaction format schema |
-| `midnight://schema/proof` | ZK proof format schema |
+| `midnight://schema/proof`       | ZK proof format schema    |
 
 **Example request:**
+
 ```json
 {
   "method": "resources/read",
@@ -325,13 +342,16 @@ Resources are accessed via URI patterns. Use `resources/read` with the URI.
 ```
 
 **Response:**
+
 ```json
 {
-  "contents": [{
-    "uri": "midnight://docs/compact-reference",
-    "mimeType": "text/markdown",
-    "text": "# Compact Language Reference\n\n..."
-  }]
+  "contents": [
+    {
+      "uri": "midnight://docs/compact-reference",
+      "mimeType": "text/markdown",
+      "text": "# Compact Language Reference\n\n..."
+    }
+  ]
 }
 ```
 
@@ -346,6 +366,7 @@ Prompts are templates that guide AI assistants through common tasks.
 Guided prompt for creating new Compact contracts.
 
 **Arguments:**
+
 ```typescript
 {
   name: string;               // Contract name
@@ -360,6 +381,7 @@ Guided prompt for creating new Compact contracts.
 Security and best practices review for existing contracts.
 
 **Arguments:**
+
 ```typescript
 {
   code: string;               // Contract code to review
@@ -372,6 +394,7 @@ Security and best practices review for existing contracts.
 Educational prompt for explaining Midnight concepts.
 
 **Arguments:**
+
 ```typescript
 {
   concept: string;            // Concept to explain
@@ -384,6 +407,7 @@ Educational prompt for explaining Midnight concepts.
 Compare different implementation approaches.
 
 **Arguments:**
+
 ```typescript
 {
   goal: string;               // What you want to achieve
@@ -396,6 +420,7 @@ Compare different implementation approaches.
 Help debug issues with a Compact contract.
 
 **Arguments:**
+
 ```typescript
 {
   code: string;               // Contract code
@@ -406,6 +431,7 @@ Help debug issues with a Compact contract.
 ```
 
 **Example request:**
+
 ```json
 {
   "method": "prompts/get",
@@ -438,10 +464,10 @@ All tools return errors in a consistent format:
 
 Common error codes:
 
-| Error | Cause |
-|-------|-------|
-| `Unknown tool: <name>` | Tool name not found |
-| `Invalid input: <details>` | Zod validation failed |
-| `Vector store not initialized` | ChromaDB unavailable |
-| `GitHub API error` | Rate limit or auth issue |
-| `Parse error` | Invalid Compact syntax |
+| Error                          | Cause                    |
+| ------------------------------ | ------------------------ |
+| `Unknown tool: <name>`         | Tool name not found      |
+| `Invalid input: <details>`     | Zod validation failed    |
+| `Vector store not initialized` | ChromaDB unavailable     |
+| `GitHub API error`             | Rate limit or auth issue |
+| `Parse error`                  | Invalid Compact syntax   |
