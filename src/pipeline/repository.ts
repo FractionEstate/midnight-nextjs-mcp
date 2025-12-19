@@ -56,31 +56,6 @@ export const GetMigrationGuideInputSchema = z.object({
     .describe("Target version (default: latest stable)"),
 });
 
-export const GetFileAtVersionInputSchema = z.object({
-  repo: z.string().describe("Repository name (e.g., 'compact', 'midnight-js')"),
-  path: z.string().describe("File path within repository"),
-  version: z
-    .string()
-    .describe("Version tag (e.g., 'v1.0.0') or branch (e.g., 'main')"),
-});
-
-export const CompareSyntaxInputSchema = z.object({
-  repo: z.string().describe("Repository name (e.g., 'compact')"),
-  path: z.string().describe("File path to compare"),
-  oldVersion: z.string().describe("Old version tag (e.g., 'v0.9.0')"),
-  newVersion: z
-    .string()
-    .optional()
-    .describe("New version tag (default: latest)"),
-});
-
-export const GetLatestSyntaxInputSchema = z.object({
-  repo: z
-    .string()
-    .default("compact")
-    .describe("Repository name (default: 'compact')"),
-});
-
 export type GetFileInput = z.infer<typeof GetFileInputSchema>;
 export type ListExamplesInput = z.infer<typeof ListExamplesInputSchema>;
 export type GetLatestUpdatesInput = z.infer<typeof GetLatestUpdatesInputSchema>;
@@ -91,10 +66,8 @@ export type CheckBreakingChangesInput = z.infer<
 export type GetMigrationGuideInput = z.infer<
   typeof GetMigrationGuideInputSchema
 >;
-export type GetFileAtVersionInput = z.infer<typeof GetFileAtVersionInputSchema>;
-export type CompareSyntaxInput = z.infer<typeof CompareSyntaxInputSchema>;
-export type GetLatestSyntaxInput = z.infer<typeof GetLatestSyntaxInputSchema>;
 
+// Repository name mapping
 // Repository name mapping
 const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   // Core Language & SDK
@@ -150,7 +123,6 @@ const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   awesome: { owner: "midnightntwrk", repo: "midnight-awesome-dapps" },
   "contributor-hub": { owner: "midnightntwrk", repo: "contributor-hub" },
 };
-
 // Example definitions
 interface ExampleDefinition {
   name: string;
@@ -188,6 +160,7 @@ const EXAMPLES: ExampleDefinition[] = [
     mainFile: "contract/src/bboard.compact",
     features: [
       "Private messaging",
+      "Private messaging",
       "React frontend",
       "CLI interface",
       "Wallet integration",
@@ -211,7 +184,6 @@ const EXAMPLES: ExampleDefinition[] = [
     ],
   },
 ];
-
 /**
  * Resolve repository name alias to owner/repo
  */
@@ -498,137 +470,6 @@ export async function getMigrationGuide(input: GetMigrationGuideInput) {
   };
 }
 
-/**
- * Get a file at a specific version - critical for version-accurate recommendations
- */
-export async function getFileAtVersion(input: GetFileAtVersionInput) {
-  logger.debug("Getting file at version", input);
-
-  const resolved = resolveRepo(input.repo);
-  if (!resolved) {
-    throw new Error(
-      `Unknown repository: ${input.repo}. Available: ${Object.keys(REPO_ALIASES).join(", ")}`
-    );
-  }
-
-  const result = await releaseTracker.getFileAtVersion(
-    resolved.owner,
-    resolved.repo,
-    input.path,
-    input.version
-  );
-
-  if (!result) {
-    throw new Error(
-      `File not found: ${input.path} at version ${input.version} in ${input.repo}`
-    );
-  }
-
-  return {
-    repository: `${resolved.owner}/${resolved.repo}`,
-    path: input.path,
-    version: result.version,
-    content: result.content,
-    note: `This is the exact content at version ${result.version}. Use this as the source of truth for syntax and API at this version.`,
-  };
-}
-
-/**
- * Compare syntax between two versions - shows what changed
- */
-export async function compareSyntax(input: CompareSyntaxInput) {
-  logger.debug("Comparing syntax between versions", input);
-
-  const resolved = resolveRepo(input.repo);
-  if (!resolved) {
-    throw new Error(
-      `Unknown repository: ${input.repo}. Available: ${Object.keys(REPO_ALIASES).join(", ")}`
-    );
-  }
-
-  // If no newVersion specified, get latest
-  let newVersion = input.newVersion;
-  if (!newVersion) {
-    const versionInfo = await releaseTracker.getVersionInfo(
-      resolved.owner,
-      resolved.repo
-    );
-    newVersion =
-      versionInfo.latestStableRelease?.tag ||
-      versionInfo.latestRelease?.tag ||
-      "main";
-  }
-
-  const comparison = await releaseTracker.compareSyntax(
-    resolved.owner,
-    resolved.repo,
-    input.path,
-    input.oldVersion,
-    newVersion
-  );
-
-  return {
-    repository: `${resolved.owner}/${resolved.repo}`,
-    path: input.path,
-    oldVersion: comparison.oldVersion,
-    newVersion: comparison.newVersion,
-    hasDifferences: comparison.hasDifferences,
-    oldContent: comparison.oldContent,
-    newContent: comparison.newContent,
-    recommendation: comparison.hasDifferences
-      ? `⚠️ This file has changed between ${comparison.oldVersion} and ${comparison.newVersion}. Review the differences before using code patterns from the old version.`
-      : `✅ No changes in this file between versions.`,
-  };
-}
-
-/**
- * Get the latest syntax reference for Compact language
- * This is the source of truth for writing valid, compilable contracts
- */
-export async function getLatestSyntax(input: GetLatestSyntaxInput) {
-  logger.debug("Getting latest syntax reference", input);
-
-  const resolved = resolveRepo(input.repo);
-  if (!resolved) {
-    throw new Error(
-      `Unknown repository: ${input.repo}. Available: ${Object.keys(REPO_ALIASES).join(", ")}`
-    );
-  }
-
-  const reference = await releaseTracker.getLatestSyntaxReference(
-    resolved.owner,
-    resolved.repo
-  );
-
-  if (!reference || reference.syntaxFiles.length === 0) {
-    // Fallback: get example contracts as syntax reference
-    const versionInfo = await releaseTracker.getVersionInfo(
-      resolved.owner,
-      resolved.repo
-    );
-    const version = versionInfo.latestStableRelease?.tag || "main";
-
-    return {
-      repository: `${resolved.owner}/${resolved.repo}`,
-      version,
-      warning:
-        "No grammar documentation found. Use example contracts as reference.",
-      syntaxFiles: [],
-      examplePaths: ["examples/", "test/", "contracts/"],
-    };
-  }
-
-  return {
-    repository: `${resolved.owner}/${resolved.repo}`,
-    version: reference.version,
-    syntaxFiles: reference.syntaxFiles.map((f) => ({
-      path: f.path,
-      content: f.content,
-    })),
-    note: `This is the authoritative syntax reference at version ${reference.version}. Use this to ensure contracts are compilable.`,
-  };
-}
-
 // Tool definitions for MCP
 export const repositoryTools = [
   {
@@ -756,73 +597,5 @@ export const repositoryTools = [
       required: ["repo", "fromVersion"],
     },
     handler: getMigrationGuide,
-  },
-  {
-    name: "midnight:get-file-at-version",
-    description:
-      "Get the exact content of a file at a specific version. CRITICAL: Use this to ensure code recommendations match the user's version. Always prefer this over get-file when version accuracy matters.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        repo: {
-          type: "string",
-          description: "Repository name (e.g., 'compact', 'midnight-js')",
-        },
-        path: {
-          type: "string",
-          description: "File path within repository",
-        },
-        version: {
-          type: "string",
-          description: "Version tag (e.g., 'v1.0.0') or branch (e.g., 'main')",
-        },
-      },
-      required: ["repo", "path", "version"],
-    },
-    handler: getFileAtVersion,
-  },
-  {
-    name: "midnight:compare-syntax",
-    description:
-      "Compare a file between two versions to see what changed. Use this before recommending code patterns to ensure they work with the user's version.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        repo: {
-          type: "string",
-          description: "Repository name (e.g., 'compact')",
-        },
-        path: {
-          type: "string",
-          description: "File path to compare",
-        },
-        oldVersion: {
-          type: "string",
-          description: "Old version tag (e.g., 'v0.9.0')",
-        },
-        newVersion: {
-          type: "string",
-          description: "New version tag (default: latest stable)",
-        },
-      },
-      required: ["repo", "path", "oldVersion"],
-    },
-    handler: compareSyntax,
-  },
-  {
-    name: "midnight:get-latest-syntax",
-    description:
-      "Get the authoritative syntax reference for Compact language at the latest version. Use this as the source of truth when writing or reviewing contracts to ensure they compile.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        repo: {
-          type: "string",
-          description: "Repository name (default: 'compact')",
-        },
-      },
-      required: [],
-    },
-    handler: getLatestSyntax,
   },
 ];

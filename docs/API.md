@@ -295,6 +295,194 @@ Retrieve recent changes across Midnight repositories.
 
 ---
 
+### midnight:get-version-info
+
+Get the latest version and release information for a repository.
+
+**Input Schema:**
+
+```typescript
+{
+  repo: string; // Repository name (e.g., "compact", "midnight-js")
+}
+```
+
+**Output:**
+
+```typescript
+{
+  repository: string;
+  latestVersion: string;
+  latestStableVersion: string;
+  publishedAt: string | null;
+  releaseNotes: string | null;
+  recentReleases: Array<{
+    version: string;
+    date: string;
+    isPrerelease: boolean;
+    url: string;
+  }>;
+  recentBreakingChanges: string[];
+  versionContext: string;
+}
+```
+
+---
+
+### midnight:check-breaking-changes
+
+Check for breaking changes between your current version and the latest.
+
+**Input Schema:**
+
+```typescript
+{
+  repo: string; // Repository name
+  currentVersion: string; // Version you're using (e.g., "v1.0.0")
+}
+```
+
+**Output:**
+
+```typescript
+{
+  repository: string;
+  currentVersion: string;
+  latestVersion: string;
+  isOutdated: boolean;
+  versionsBehind: number;
+  hasBreakingChanges: boolean;
+  breakingChanges: string[];
+  recommendation: string;
+}
+```
+
+---
+
+### midnight:get-migration-guide
+
+Get a detailed migration guide for upgrading between versions.
+
+**Input Schema:**
+
+```typescript
+{
+  repo: string;        // Repository name
+  fromVersion: string; // Version migrating from
+  toVersion?: string;  // Target version (default: latest stable)
+}
+```
+
+**Output:**
+
+```typescript
+{
+  repository: string;
+  from: string;
+  to: string;
+  summary: {
+    breakingChangesCount: number;
+    deprecationsCount: number;
+    newFeaturesCount: number;
+  };
+  breakingChanges: string[];
+  deprecations: string[];
+  newFeatures: string[];
+  migrationSteps: string[];
+  migrationDifficulty: string;
+}
+```
+
+---
+
+### midnight:get-file-at-version
+
+Get the exact content of a file at a specific version. **Critical for ensuring code recommendations match the user's version.**
+
+**Input Schema:**
+
+```typescript
+{
+  repo: string; // Repository name
+  path: string; // File path within repository
+  version: string; // Version tag (e.g., "v1.0.0") or branch
+}
+```
+
+**Output:**
+
+```typescript
+{
+  repository: string;
+  path: string;
+  version: string;
+  content: string;
+  note: string;
+}
+```
+
+---
+
+### midnight:compare-syntax
+
+Compare a file between two versions to see what changed.
+
+**Input Schema:**
+
+```typescript
+{
+  repo: string;       // Repository name
+  path: string;       // File path to compare
+  oldVersion: string; // Old version tag
+  newVersion?: string; // New version (default: latest)
+}
+```
+
+**Output:**
+
+```typescript
+{
+  repository: string;
+  path: string;
+  oldVersion: string;
+  newVersion: string;
+  hasDifferences: boolean;
+  oldContent: string | null;
+  newContent: string | null;
+  recommendation: string;
+}
+```
+
+---
+
+### midnight:get-latest-syntax
+
+Get the authoritative syntax reference for Compact at the latest version. **Use this as the source of truth when writing contracts.**
+
+**Input Schema:**
+
+```typescript
+{
+  repo?: string; // Repository name (default: "compact")
+}
+```
+
+**Output:**
+
+```typescript
+{
+  repository: string;
+  version: string;
+  syntaxFiles: Array<{
+    path: string;
+    content: string;
+  }>;
+  note: string;
+}
+```
+
+---
+
 ## Resources
 
 Resources are accessed via URI patterns. Use `resources/read` with the URI.

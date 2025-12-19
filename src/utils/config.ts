@@ -67,6 +67,7 @@ export interface RepositoryConfig {
 }
 
 export const DEFAULT_REPOSITORIES: RepositoryConfig[] = [
+  // Core Language & SDK
   {
     owner: "midnightntwrk",
     repo: "compact",
@@ -81,6 +82,17 @@ export const DEFAULT_REPOSITORIES: RepositoryConfig[] = [
     patterns: ["**/*.ts", "**/*.md"],
     exclude: ["node_modules/**", "dist/**"],
   },
+
+  // Documentation
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-docs",
+    branch: "main",
+    patterns: ["**/*.md", "**/*.mdx"],
+    exclude: ["node_modules/**"],
+  },
+
+  // Example DApps
   {
     owner: "midnightntwrk",
     repo: "example-counter",
@@ -97,9 +109,75 @@ export const DEFAULT_REPOSITORIES: RepositoryConfig[] = [
   },
   {
     owner: "midnightntwrk",
-    repo: "midnight-docs",
+    repo: "example-dex",
     branch: "main",
-    patterns: ["**/*.md", "**/*.mdx"],
+    patterns: ["**/*.compact", "**/*.ts", "**/*.tsx", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+
+  // Developer Tools
+  {
+    owner: "midnightntwrk",
+    repo: "create-mn-app",
+    branch: "main",
+    patterns: ["**/*.ts", "**/*.md", "**/*.json"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-wallet",
+    branch: "main",
+    patterns: ["**/*.ts", "**/*.tsx", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+
+  // Infrastructure
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-indexer",
+    branch: "main",
+    patterns: ["**/*.ts", "**/*.md", "**/*.rs"],
+    exclude: ["node_modules/**", "dist/**", "target/**"],
+  },
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-node-docker",
+    branch: "main",
+    patterns: ["**/*.md", "**/Dockerfile", "**/*.yml", "**/*.yaml"],
+    exclude: [],
+  },
+
+  // APIs & Connectors
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-dapp-connector-api",
+    branch: "main",
+    patterns: ["**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+
+  // Tooling
+  {
+    owner: "midnightntwrk",
+    repo: "compact-tree-sitter",
+    branch: "main",
+    patterns: ["**/*.js", "**/*.md", "**/*.scm"],
     exclude: ["node_modules/**"],
+  },
+
+  // Community
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-awesome-dapps",
+    branch: "main",
+    patterns: ["**/*.md"],
+    exclude: [],
+  },
+  {
+    owner: "midnightntwrk",
+    repo: "contributor-hub",
+    branch: "main",
+    patterns: ["**/*.md"],
+    exclude: [],
   },
 ];

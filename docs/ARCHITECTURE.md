@@ -16,7 +16,7 @@ The Midnight MCP Server implements the [Model Context Protocol](https://modelcon
 │                      MCP Server Layer                            │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │   Tools     │  │  Resources  │  │        Prompts          │  │
-│  │  (8 tools)  │  │(16 resources│  │     (5 templates)       │  │
+│  │ (14 tools)  │  │(16 resources│  │     (5 templates)       │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -34,6 +34,64 @@ The Midnight MCP Server implements the [Model Context Protocol](https://modelcon
 │   (OpenAI)    │
 └───────────────┘
 ```
+
+## Indexed Repositories
+
+The server indexes 15 public repositories from the Midnight organization:
+
+### Core Language & SDK
+
+| Repository    | Description                     | File Types               |
+| ------------- | ------------------------------- | ------------------------ |
+| `compact`     | Compact smart contract language | `.compact`, `.ts`, `.md` |
+| `midnight-js` | JavaScript/TypeScript SDK       | `.ts`, `.md`             |
+
+### Documentation
+
+| Repository      | Description            | File Types    |
+| --------------- | ---------------------- | ------------- |
+| `midnight-docs` | Official documentation | `.md`, `.mdx` |
+
+### Example DApps
+
+| Repository        | Description                     | File Types                       |
+| ----------------- | ------------------------------- | -------------------------------- |
+| `example-counter` | Simple counter contract example | `.compact`, `.ts`, `.md`         |
+| `example-bboard`  | Bulletin board DApp             | `.compact`, `.ts`, `.tsx`, `.md` |
+| `example-dex`     | Decentralized exchange example  | `.compact`, `.ts`, `.tsx`, `.md` |
+
+### Developer Tools
+
+| Repository        | Description           | File Types            |
+| ----------------- | --------------------- | --------------------- |
+| `create-mn-app`   | CLI scaffolding tool  | `.ts`, `.md`, `.json` |
+| `midnight-wallet` | Wallet implementation | `.ts`, `.tsx`, `.md`  |
+
+### Infrastructure
+
+| Repository             | Description         | File Types                  |
+| ---------------------- | ------------------- | --------------------------- |
+| `midnight-indexer`     | Blockchain indexer  | `.ts`, `.md`, `.rs`         |
+| `midnight-node-docker` | Node Docker configs | `.md`, `Dockerfile`, `.yml` |
+
+### APIs & Connectors
+
+| Repository                    | Description        | File Types   |
+| ----------------------------- | ------------------ | ------------ |
+| `midnight-dapp-connector-api` | DApp connector API | `.ts`, `.md` |
+
+### Tooling
+
+| Repository            | Description                     | File Types           |
+| --------------------- | ------------------------------- | -------------------- |
+| `compact-tree-sitter` | Tree-sitter grammar for Compact | `.js`, `.md`, `.scm` |
+
+### Community
+
+| Repository               | Description           | File Types |
+| ------------------------ | --------------------- | ---------- |
+| `midnight-awesome-dapps` | Curated DApp list     | `.md`      |
+| `contributor-hub`        | Contributor resources | `.md`      |
 
 ## Core Components
 
@@ -58,18 +116,24 @@ const server = new Server(SERVER_INFO, {
 
 ### 2. Tools (`src/tools/`)
 
-Eight tools exposed to AI assistants:
+Fourteen tools exposed to AI assistants:
 
-| Tool                          | File          | Description                              |
-| ----------------------------- | ------------- | ---------------------------------------- |
-| `midnight:search-compact`     | search.ts     | Semantic search across Compact contracts |
-| `midnight:search-typescript`  | search.ts     | Search TypeScript SDK code               |
-| `midnight:search-docs`        | search.ts     | Search documentation                     |
-| `midnight:analyze-contract`   | analyze.ts    | Static analysis of Compact contracts     |
-| `midnight:explain-circuit`    | analyze.ts    | Plain-language circuit explanations      |
-| `midnight:get-file`           | repository.ts | Fetch files from GitHub repos            |
-| `midnight:list-examples`      | repository.ts | List example contracts/DApps             |
-| `midnight:get-latest-updates` | repository.ts | Recent repository changes                |
+| Tool                              | File          | Description                              |
+| --------------------------------- | ------------- | ---------------------------------------- |
+| `midnight:search-compact`         | search.ts     | Semantic search across Compact contracts |
+| `midnight:search-typescript`      | search.ts     | Search TypeScript SDK code               |
+| `midnight:search-docs`            | search.ts     | Search documentation                     |
+| `midnight:analyze-contract`       | analyze.ts    | Static analysis of Compact contracts     |
+| `midnight:explain-circuit`        | analyze.ts    | Plain-language circuit explanations      |
+| `midnight:get-file`               | repository.ts | Fetch files from GitHub repos            |
+| `midnight:list-examples`          | repository.ts | List example contracts/DApps             |
+| `midnight:get-latest-updates`     | repository.ts | Recent repository changes                |
+| `midnight:get-version-info`       | repository.ts | Get latest version and release info      |
+| `midnight:check-breaking-changes` | repository.ts | Check for breaking changes since version |
+| `midnight:get-migration-guide`    | repository.ts | Migration guide between versions         |
+| `midnight:get-file-at-version`    | repository.ts | Get file at specific version             |
+| `midnight:compare-syntax`         | repository.ts | Compare file between two versions        |
+| `midnight:get-latest-syntax`      | repository.ts | Get authoritative syntax reference       |
 
 Each tool has:
 
