@@ -180,4 +180,13 @@ export const DEFAULT_REPOSITORIES: RepositoryConfig[] = [
     patterns: ["**/*.md"],
     exclude: [],
   },
+
+  // Partner Libraries
+  {
+    owner: "OpenZeppelin",
+    repo: "compact-contracts",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
 ];

@@ -149,6 +149,11 @@ const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   },
   awesome: { owner: "midnightntwrk", repo: "midnight-awesome-dapps" },
   "contributor-hub": { owner: "midnightntwrk", repo: "contributor-hub" },
+
+  // Partner Libraries (OpenZeppelin)
+  "compact-contracts": { owner: "OpenZeppelin", repo: "compact-contracts" },
+  openzeppelin: { owner: "OpenZeppelin", repo: "compact-contracts" },
+  oz: { owner: "OpenZeppelin", repo: "compact-contracts" },
 };
 
 // Example definitions

@@ -93,6 +93,12 @@ The server indexes 15 public repositories from the Midnight organization:
 | `midnight-awesome-dapps` | Curated DApp list     | `.md`      |
 | `contributor-hub`        | Contributor resources | `.md`      |
 
+### Partner Libraries
+
+| Repository                        | Description                                      | File Types               |
+| --------------------------------- | ------------------------------------------------ | ------------------------ |
+| `OpenZeppelin/compact-contracts`  | OpenZeppelin Contracts for Midnight - secure, audited design patterns | `.compact`, `.ts`, `.md` |
+
 ## Core Components
 
 ### 1. Server (`src/server.ts`)
