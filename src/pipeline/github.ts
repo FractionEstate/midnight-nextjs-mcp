@@ -1,6 +1,121 @@
 import { Octokit } from "octokit";
 import { config, logger, RepositoryConfig } from "../utils/index.js";
 
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  maxDelayMs: 10000,
+};
+
+/**
+ * Retry wrapper with exponential backoff
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      const isRetryable = isRetryableError(error);
+
+      if (!isRetryable || attempt === RETRY_CONFIG.maxRetries) {
+        logger.error(`${operationName} failed after ${attempt} attempt(s)`, {
+          error: String(error),
+          attempt,
+        });
+        throw enhanceError(error, operationName);
+      }
+
+      const delay = Math.min(
+        RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt - 1),
+        RETRY_CONFIG.maxDelayMs
+      );
+
+      logger.warn(`${operationName} failed, retrying in ${delay}ms...`, {
+        attempt,
+        error: String(error),
+      });
+
+      await sleep(delay);
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Check if an error is retryable
+ */
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    // Retry on network errors, rate limits, and server errors
+    return (
+      message.includes("network") ||
+      message.includes("timeout") ||
+      message.includes("econnreset") ||
+      message.includes("rate limit") ||
+      message.includes("403") ||
+      message.includes("500") ||
+      message.includes("502") ||
+      message.includes("503") ||
+      message.includes("504")
+    );
+  }
+  return false;
+}
+
+/**
+ * Enhance error with more context
+ */
+function enhanceError(error: unknown, operation: string): Error {
+  const originalMessage =
+    error instanceof Error ? error.message : String(error);
+
+  // Provide user-friendly error messages
+  if (
+    originalMessage.includes("rate limit") ||
+    originalMessage.includes("403")
+  ) {
+    return new Error(
+      `GitHub API rate limit exceeded during ${operation}. ` +
+        `Add a GITHUB_TOKEN to your config to increase limits from 60 to 5000 requests/hour.`
+    );
+  }
+
+  if (originalMessage.includes("404")) {
+    return new Error(
+      `Resource not found during ${operation}. ` +
+        `Check that the repository/file exists and is accessible.`
+    );
+  }
+
+  if (
+    originalMessage.includes("timeout") ||
+    originalMessage.includes("network")
+  ) {
+    return new Error(
+      `Network error during ${operation}. ` +
+        `Check your internet connection and try again.`
+    );
+  }
+
+  return new Error(`${operation} failed: ${originalMessage}`);
+}
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Simple in-memory cache with TTL
 interface CacheEntry<T> {
   data: T;
@@ -88,16 +203,15 @@ export class GitHubClient {
     }
 
     try {
-      const { data: repoData } = await this.octokit.rest.repos.get({
-        owner,
-        repo,
-      });
+      const { data: repoData } = await withRetry(
+        () => this.octokit.rest.repos.get({ owner, repo }),
+        `getRepositoryInfo(${owner}/${repo})`
+      );
 
-      const { data: commits } = await this.octokit.rest.repos.listCommits({
-        owner,
-        repo,
-        per_page: 1,
-      });
+      const { data: commits } = await withRetry(
+        () => this.octokit.rest.repos.listCommits({ owner, repo, per_page: 1 }),
+        `getCommits(${owner}/${repo})`
+      );
 
       const lastCommit = commits[0]
         ? {
@@ -144,12 +258,10 @@ export class GitHubClient {
     }
 
     try {
-      const { data } = await this.octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path,
-        ref,
-      });
+      const { data } = await withRetry(
+        () => this.octokit.rest.repos.getContent({ owner, repo, path, ref }),
+        `getFileContent(${owner}/${repo}/${path})`
+      );
 
       if (Array.isArray(data) || data.type !== "file") {
         return null;
@@ -194,18 +306,26 @@ export class GitHubClient {
     }
 
     try {
-      const { data: refData } = await this.octokit.rest.git.getRef({
-        owner,
-        repo,
-        ref: `heads/${ref || "main"}`,
-      });
+      const { data: refData } = await withRetry(
+        () =>
+          this.octokit.rest.git.getRef({
+            owner,
+            repo,
+            ref: `heads/${ref || "main"}`,
+          }),
+        `getRef(${owner}/${repo})`
+      );
 
-      const { data: treeData } = await this.octokit.rest.git.getTree({
-        owner,
-        repo,
-        tree_sha: refData.object.sha,
-        recursive: "true",
-      });
+      const { data: treeData } = await withRetry(
+        () =>
+          this.octokit.rest.git.getTree({
+            owner,
+            repo,
+            tree_sha: refData.object.sha,
+            recursive: "true",
+          }),
+        `getTree(${owner}/${repo})`
+      );
 
       const result = treeData.tree
         .filter((item) => item.type === "blob" && item.path)

@@ -9,7 +9,7 @@ import {
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import { logger } from "./utils/index.js";
+import { logger, formatErrorResponse } from "./utils/index.js";
 import { vectorStore } from "./db/index.js";
 import { allTools } from "./tools/index.js";
 import {
@@ -79,11 +79,23 @@ function registerToolHandlers(server: Server): void {
 
     const tool = allTools.find((t) => t.name === name);
     if (!tool) {
+      const availableTools = allTools
+        .map((t) => t.name)
+        .slice(0, 5)
+        .join(", ");
       return {
         content: [
           {
             type: "text",
-            text: `Unknown tool: ${name}`,
+            text: JSON.stringify(
+              {
+                error: `Unknown tool: ${name}`,
+                suggestion: `Available tools include: ${availableTools}...`,
+                hint: "Use ListTools to see all available tools",
+              },
+              null,
+              2
+            ),
           },
         ],
         isError: true,
@@ -102,11 +114,12 @@ function registerToolHandlers(server: Server): void {
       };
     } catch (error) {
       logger.error(`Tool error: ${name}`, { error: String(error) });
+      const errorResponse = formatErrorResponse(error, `tool:${name}`);
       return {
         content: [
           {
             type: "text",
-            text: `Error executing ${name}: ${error}`,
+            text: JSON.stringify(errorResponse, null, 2),
           },
         ],
         isError: true,
@@ -154,12 +167,28 @@ function registerResourceHandlers(server: Server): void {
       }
 
       if (!content) {
+        const resourceTypes = [
+          "midnight://docs/",
+          "midnight://code/",
+          "midnight://schema/",
+        ];
+        const validPrefix = resourceTypes.find((p) => uri.startsWith(p));
         return {
           contents: [
             {
               uri,
-              mimeType: "text/plain",
-              text: `Resource not found: ${uri}`,
+              mimeType: "application/json",
+              text: JSON.stringify(
+                {
+                  error: `Resource not found: ${uri}`,
+                  suggestion: validPrefix
+                    ? `Check the resource path after '${validPrefix}'`
+                    : `Valid resource prefixes: ${resourceTypes.join(", ")}`,
+                  hint: "Use ListResources to see all available resources",
+                },
+                null,
+                2
+              ),
             },
           ],
         };
@@ -176,12 +205,13 @@ function registerResourceHandlers(server: Server): void {
       };
     } catch (error) {
       logger.error(`Resource error: ${uri}`, { error: String(error) });
+      const errorResponse = formatErrorResponse(error, `resource:${uri}`);
       return {
         contents: [
           {
             uri,
-            mimeType: "text/plain",
-            text: `Error reading resource: ${error}`,
+            mimeType: "application/json",
+            text: JSON.stringify(errorResponse, null, 2),
           },
         ],
       };
