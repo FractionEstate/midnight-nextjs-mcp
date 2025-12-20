@@ -8,7 +8,9 @@ const ConfigSchema = z.object({
   mode: z.enum(["hosted", "local"]).default("hosted"),
 
   // Hosted API URL (used when mode is 'hosted')
-  hostedApiUrl: z.string().default("https://api.midnight-mcp.dev"),
+  hostedApiUrl: z
+    .string()
+    .default("https://midnight-mcp-api.midnightmcp.workers.dev"),
 
   // GitHub
   githubToken: z.string().optional(),
