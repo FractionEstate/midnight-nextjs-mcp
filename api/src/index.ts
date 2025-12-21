@@ -198,6 +198,39 @@ function formatResults(
   };
 }
 
+// Hybrid search: boost scores for keyword matches
+function applyKeywordBoost(
+  matches: VectorizeMatches["matches"],
+  query: string
+): VectorizeMatches["matches"] {
+  const queryTerms = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((t) => t.length > 2); // Ignore short words
+
+  return matches
+    .map((match) => {
+      const content = ((match.metadata?.content as string) || "").toLowerCase();
+      const filePath = (
+        (match.metadata?.filePath as string) || ""
+      ).toLowerCase();
+
+      // Count keyword matches
+      let keywordMatches = 0;
+      for (const term of queryTerms) {
+        if (content.includes(term)) keywordMatches++;
+        if (filePath.includes(term)) keywordMatches += 0.5; // Boost for filename match
+      }
+
+      // Apply boost: up to 20% bonus for keyword matches
+      const keywordBoost = Math.min(keywordMatches * 0.05, 0.2);
+      const boostedScore = Math.min(match.score + keywordBoost, 1.0);
+
+      return { ...match, score: boostedScore };
+    })
+    .sort((a, b) => b.score - a.score); // Re-sort by boosted score
+}
+
 // Validate and sanitize query
 function validateQuery(query: unknown): string | null {
   if (typeof query !== "string") return null;
@@ -239,11 +272,14 @@ app.post("/v1/search", async (c) => {
         : undefined,
     });
 
+    // Apply hybrid search: boost scores for keyword matches
+    const boostedMatches = applyKeywordBoost(results.matches, query);
+
     // Track query metrics
-    trackQuery(query, "search", results.matches, body.filter?.language);
+    trackQuery(query, "search", boostedMatches, body.filter?.language);
     await persistMetrics(c.env.METRICS);
 
-    return c.json(formatResults(results.matches, query));
+    return c.json(formatResults(boostedMatches, query));
   } catch (error) {
     console.error("Search error:", error);
     return c.json({ error: "Search failed" }, 500);
@@ -271,11 +307,14 @@ app.post("/v1/search/compact", async (c) => {
       filter: { language: "compact" },
     });
 
+    // Apply hybrid search: boost scores for keyword matches
+    const boostedMatches = applyKeywordBoost(results.matches, query);
+
     // Track query metrics
-    trackQuery(query, "compact", results.matches, "compact");
+    trackQuery(query, "compact", boostedMatches, "compact");
     await persistMetrics(c.env.METRICS);
 
-    return c.json(formatResults(results.matches, query));
+    return c.json(formatResults(boostedMatches, query));
   } catch (error) {
     console.error("Search compact error:", error);
     return c.json({ error: "Search failed" }, 500);
@@ -303,11 +342,14 @@ app.post("/v1/search/typescript", async (c) => {
       filter: { language: "typescript" },
     });
 
+    // Apply hybrid search: boost scores for keyword matches
+    const boostedMatches = applyKeywordBoost(results.matches, query);
+
     // Track query metrics
-    trackQuery(query, "typescript", results.matches, "typescript");
+    trackQuery(query, "typescript", boostedMatches, "typescript");
     await persistMetrics(c.env.METRICS);
 
-    return c.json(formatResults(results.matches, query));
+    return c.json(formatResults(boostedMatches, query));
   } catch (error) {
     console.error("Search typescript error:", error);
     return c.json({ error: "Search failed" }, 500);
@@ -335,11 +377,14 @@ app.post("/v1/search/docs", async (c) => {
       filter: { language: "markdown" },
     });
 
+    // Apply hybrid search: boost scores for keyword matches
+    const boostedMatches = applyKeywordBoost(results.matches, query);
+
     // Track query metrics
-    trackQuery(query, "docs", results.matches, "markdown");
+    trackQuery(query, "docs", boostedMatches, "markdown");
     await persistMetrics(c.env.METRICS);
 
-    return c.json(formatResults(results.matches, query));
+    return c.json(formatResults(boostedMatches, query));
   } catch (error) {
     console.error("Search docs error:", error);
     return c.json({ error: "Search failed" }, 500);
