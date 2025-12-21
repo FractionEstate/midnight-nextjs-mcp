@@ -36,9 +36,11 @@
 
 **Local mode**: Set `MIDNIGHT_LOCAL=true`. Requires ChromaDB + OpenAI API key. Search runs locally with your own embeddings.
 
-## Indexed Repositories
+## Repositories
 
-16 repositories from [midnightntwrk](https://github.com/midnightntwrk) + 1 partner:
+### Indexed for Semantic Search (6)
+
+Core repositories indexed in the vector database for semantic search:
 
 | Repository                       | Contents                  |
 | -------------------------------- | ------------------------- |
@@ -47,16 +49,23 @@
 | `midnight-docs`                  | Official documentation    |
 | `example-counter`                | Counter contract example  |
 | `example-bboard`                 | Bulletin board DApp       |
-| `example-dex`                    | DEX example               |
-| `create-mn-app`                  | CLI scaffolding           |
-| `midnight-wallet`                | Wallet implementation     |
-| `midnight-indexer`               | Blockchain indexer        |
-| `midnight-node-docker`           | Node Docker configs       |
-| `midnight-dapp-connector-api`    | DApp connector API        |
-| `compact-tree-sitter`            | Tree-sitter grammar       |
-| `midnight-awesome-dapps`         | Community DApp list       |
-| `contributor-hub`                | Contributor resources     |
 | `OpenZeppelin/compact-contracts` | Audited contract patterns |
+
+### Available via GitHub Tools (16)
+
+Additional repositories accessible via `midnight-get-file` and other GitHub tools:
+
+| Repository                    | Contents              |
+| ----------------------------- | --------------------- |
+| `example-dex`                 | DEX example           |
+| `create-mn-app`               | CLI scaffolding       |
+| `midnight-wallet`             | Wallet implementation |
+| `midnight-indexer`            | Blockchain indexer    |
+| `midnight-node-docker`        | Node Docker configs   |
+| `midnight-dapp-connector-api` | DApp connector API    |
+| `compact-tree-sitter`         | Tree-sitter grammar   |
+| `midnight-awesome-dapps`      | Community DApp list   |
+| `contributor-hub`             | Contributor resources |
 
 ## Components
 
