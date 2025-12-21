@@ -162,7 +162,7 @@ async function getRepoFiles(
 
       for (const item of data) {
         if (item.type === "dir") {
-          // Skip build artifacts, dependencies, tests, and config directories
+          // Skip directories that don't contain useful indexable code
           const skipDirs = [
             // Build outputs
             "node_modules",
@@ -171,38 +171,62 @@ async function getRepoFiles(
             "target",        // Rust
             ".next",
             "out",
-            
-            // Version control & config
+
+            // Version control & editor config
             ".git",
             ".github",       // Workflows not useful for code search
             ".husky",
             ".vscode",
             ".idea",
-            
+            ".cargo",        // Rust cargo config
+            ".config",
+
             // Caches
             ".cache",
             ".turbo",
             "__pycache__",
             ".parcel-cache",
-            
-            // Test artifacts (keep actual test code, skip generated)
+            ".yarn",         // Yarn cache/releases
+
+            // Test artifacts (skip generated, keep actual test code in tests/)
             "coverage",
             "__snapshots__",
             "__mocks__",
             "fixtures",
             "testdata",
-            
+            "integration-tests",  // Usually e2e tests with setup noise
+
             // Dependencies
             "vendor",
-            
-            // Docs redundancy
-            "versioned_docs",    // Docusaurus versions (duplicates)
+
+            // Docs redundancy (Docusaurus)
+            "versioned_docs",
             "versioned_sidebars",
-            "i18n",              // Translations
+            "i18n",
             "static",            // Images/assets
-            
+            "static-html",
+            "blog",              // Blog posts not useful for API search
+            "plugins",           // Docusaurus plugins
+
             // Rust specific
-            "benches",           // Benchmarks not useful for API
+            "benches",
+
+            // Midnight-specific directories (from actual repo inspection)
+            ".earthly",          // Earthly build system
+            ".sqlx",             // SQLx query cache
+            ".changes_archive",
+            ".changes_template",
+            ".spellcheck",
+            ".tag-decompositions",
+            "images",            // Docker/diagram images
+            "local-environment", // Local dev setup
+            "res",               // Chain spec resources
+            "ui",                // Internal UI tools
+            "util",              // Internal utilities
+            "wasm-proving-demos",
+            "build-tools",
+            "prerelease",        // Compact prereleases
+            "packages",          // midnight-docs test packages
           ];
           if (!skipDirs.includes(item.name)) {
             await fetchDir(item.path);
