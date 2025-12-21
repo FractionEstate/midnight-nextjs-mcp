@@ -26,7 +26,7 @@ concurrency:
 jobs:
   index:
     runs-on: ubuntu-latest
-    timeout-minutes: 180 # Allow up to 3 hours for full reindex
+    timeout-minutes: 30 # Fast mode: tarball + batch + incremental
     environment: CLOUDFLARE # Use the CLOUDFLARE environment for secrets
 
     steps:

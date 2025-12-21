@@ -2,6 +2,11 @@
  * Script to index Midnight repositories into Cloudflare Vectorize
  * Run locally with: npm run index
  *
+ * Optimizations:
+ * - Downloads repo as tarball (1 request vs hundreds)
+ * - Batches Vectorize inserts (100 vectors per call)
+ * - Incremental indexing (skips unchanged files via SHA tracking)
+ *
  * Requires:
  * - OPENAI_API_KEY env var
  * - CLOUDFLARE_API_TOKEN env var
@@ -11,6 +16,9 @@
 
 import { config } from "dotenv";
 import { resolve } from "path";
+import * as tar from "tar";
+import { Readable } from "stream";
+import { createHash } from "crypto";
 
 // Load .env from parent directory (project root)
 config({ path: resolve(__dirname, "../../.env") });
@@ -19,6 +27,7 @@ import { Octokit } from "octokit";
 import OpenAI from "openai";
 
 const VECTORIZE_INDEX = "midnight-code";
+const KV_NAMESPACE_ID = "adc06e61998c417684ee353791077992"; // METRICS namespace, reuse for SHA cache
 
 // Validate required environment variables
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -43,32 +52,6 @@ if (!GITHUB_TOKEN) {
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-
-// Rate limit handling with exponential backoff
-async function withRateLimitRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 5
-): Promise<T> {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      const isRateLimit =
-        error?.status === 403 ||
-        error?.message?.includes("rate limit") ||
-        error?.message?.includes("quota exhausted");
-
-      if (isRateLimit && attempt < maxRetries - 1) {
-        const waitTime = Math.min(Math.pow(2, attempt) * 1000, 60000); // Max 60s
-        console.log(`  ⏳ Rate limited, waiting ${waitTime / 1000}s...`);
-        await sleep(waitTime);
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw new Error("Max retries exceeded");
-}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -139,148 +122,220 @@ const EXTENSIONS: Record<string, string> = {
   ".mdx": "markdown",
 };
 
-async function getRepoFiles(
+// Directories to skip
+const SKIP_DIRS = new Set([
+  // Build outputs
+  "node_modules",
+  "dist",
+  "build",
+  "target",
+  ".next",
+  "out",
+
+  // Version control & editor config
+  ".git",
+  ".github",
+  ".husky",
+  ".vscode",
+  ".idea",
+  ".cargo",
+  ".config",
+
+  // Caches
+  ".cache",
+  ".turbo",
+  "__pycache__",
+  ".parcel-cache",
+  ".yarn",
+
+  // Test artifacts
+  "coverage",
+  "__snapshots__",
+  "__mocks__",
+
+  // Dependencies
+  "vendor",
+
+  // Docs redundancy
+  "versioned_docs",
+  "versioned_sidebars",
+  "i18n",
+  "static",
+  "static-html",
+  "blog",
+  "plugins",
+
+  // Rust specific
+  "benches",
+
+  // Midnight-specific
+  ".earthly",
+  ".sqlx",
+  ".changes_archive",
+  ".changes_template",
+  ".spellcheck",
+  ".tag-decompositions",
+  "images",
+  "local-environment",
+  "res",
+  "wasm-proving-demos",
+  "build-tools",
+  "packages",
+  ".node",
+  ".changeset",
+  "infra",
+  "mips",
+  "docs/api",
+]);
+
+// ============== KV CACHE FOR INCREMENTAL INDEXING ==============
+
+interface FileCache {
+  [filePath: string]: string; // path -> content hash
+}
+
+async function getFileCache(repoKey: string): Promise<FileCache> {
+  try {
+    const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/index-cache:${repoKey}`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}` },
+    });
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (e) {
+    // Cache miss or error - return empty
+  }
+  return {};
+}
+
+async function setFileCache(repoKey: string, cache: FileCache): Promise<void> {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/index-cache:${repoKey}`;
+  await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(cache),
+  });
+}
+
+function hashContent(content: string): string {
+  return createHash("sha256").update(content).digest("hex").substring(0, 16);
+}
+
+// ============== TARBALL DOWNLOAD (FAST!) ==============
+
+async function getRepoFilesFast(
   owner: string,
   repo: string,
-  branch: string
-): Promise<Array<{ path: string; content: string }>> {
+  branch: string,
+  existingCache: FileCache
+): Promise<{
+  files: Array<{ path: string; content: string }>;
+  newCache: FileCache;
+  skipped: number;
+}> {
   const files: Array<{ path: string; content: string }> = [];
-  let fileCount = 0;
+  const newCache: FileCache = {};
+  let skipped = 0;
 
-  async function fetchDir(path: string = "") {
-    try {
-      const { data } = await withRateLimitRetry(() =>
-        octokit.rest.repos.getContent({
-          owner,
-          repo,
-          path,
-          ref: branch,
-        })
-      );
+  console.log(`  📦 Downloading tarball...`);
 
-      if (!Array.isArray(data)) return;
+  // Download tarball (single HTTP request!)
+  const tarballUrl = `https://github.com/${owner}/${repo}/archive/refs/heads/${branch}.tar.gz`;
+  const response = await fetch(tarballUrl, {
+    headers: GITHUB_TOKEN ? { Authorization: `token ${GITHUB_TOKEN}` } : {},
+  });
 
-      for (const item of data) {
-        if (item.type === "dir") {
-          // Skip directories that don't contain useful indexable code
-          const skipDirs = [
-            // Build outputs
-            "node_modules",
-            "dist",
-            "build",
-            "target", // Rust
-            ".next",
-            "out",
+  if (!response.ok) {
+    throw new Error(`Failed to download tarball: ${response.status}`);
+  }
 
-            // Version control & editor config
-            ".git",
-            ".github", // Workflows not useful for code search
-            ".husky",
-            ".vscode",
-            ".idea",
-            ".cargo", // Rust cargo config
-            ".config",
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
-            // Caches
-            ".cache",
-            ".turbo",
-            "__pycache__",
-            ".parcel-cache",
-            ".yarn", // Yarn cache/releases
+  console.log(
+    `  📦 Downloaded ${(buffer.length / 1024 / 1024).toFixed(2)} MB, extracting...`
+  );
 
-            // Test artifacts (skip generated output, but KEEP actual test code!)
-            "coverage",
-            "__snapshots__",
-            "__mocks__",
+  // Parse tarball in memory
+  return new Promise((resolve, reject) => {
+    const entries: Array<{ path: string; content: string }> = [];
 
-            // Dependencies
-            "vendor",
+    const extract = tar.extract();
 
-            // Docs redundancy (Docusaurus)
-            "versioned_docs",
-            "versioned_sidebars",
-            "i18n",
-            "static", // Images/assets
-            "static-html",
-            "blog", // Blog posts not useful for API search
-            "plugins", // Docusaurus plugins
+    extract.on("entry", (header, stream, next) => {
+      const chunks: Buffer[] = [];
 
-            // Rust specific
-            "benches",
+      // Remove the repo-branch prefix from path (e.g., "compact-main/src/..." -> "src/...")
+      const fullPath = header.name;
+      const pathParts = fullPath.split("/");
+      pathParts.shift(); // Remove first segment (repo-branch)
+      const relativePath = pathParts.join("/");
 
-            // Midnight-specific directories (from actual repo inspection)
-            ".earthly", // Earthly build system
-            ".sqlx", // SQLx query cache
-            ".changes_archive",
-            ".changes_template",
-            ".spellcheck",
-            ".tag-decompositions",
-            "images", // Docker/diagram images
-            "local-environment", // Local dev setup
-            "res", // Chain spec resources
-            "wasm-proving-demos",
-            "build-tools",
-            "packages", // midnight-docs test packages
+      // Check if this file should be processed
+      const shouldProcess =
+        header.type === "file" &&
+        relativePath &&
+        !shouldSkipPath(relativePath) &&
+        hasValidExtension(relativePath);
 
-            // From additional repo inspection
-            ".node", // midnight-indexer node binaries
-            ".changeset", // midnight-wallet changesets
-            "infra", // midnight-wallet docker compose
-            "mips", // midnight-improvement-proposals (shell files)
-            "docs/api", // Generated API docs
-          ];
-          if (!skipDirs.includes(item.name)) {
-            await fetchDir(item.path);
+      if (shouldProcess) {
+        stream.on("data", (chunk) => chunks.push(chunk));
+        stream.on("end", () => {
+          const content = Buffer.concat(chunks).toString("utf-8");
+          const contentHash = hashContent(content);
+
+          // Check if file changed (incremental indexing)
+          if (existingCache[relativePath] === contentHash) {
+            skipped++;
+            newCache[relativePath] = contentHash; // Keep in cache
+          } else {
+            entries.push({ path: relativePath, content });
+            newCache[relativePath] = contentHash;
           }
-        } else if (item.type === "file") {
-          const ext = item.name.substring(item.name.lastIndexOf("."));
-          if (EXTENSIONS[ext]) {
-            try {
-              const { data: fileData } = await withRateLimitRetry(() =>
-                octokit.rest.repos.getContent({
-                  owner,
-                  repo,
-                  path: item.path,
-                  ref: branch,
-                })
-              );
-
-              if ("content" in fileData && fileData.content) {
-                const content = Buffer.from(
-                  fileData.content,
-                  "base64"
-                ).toString("utf-8");
-                files.push({ path: item.path, content });
-                fileCount++;
-                if (fileCount % 50 === 0) {
-                  process.stdout.write(`\r    ${fileCount} files fetched...`);
-                }
-                // Small delay every 100 files as a safety net
-                if (fileCount % 100 === 0) {
-                  await sleep(500);
-                }
-              }
-            } catch (e: any) {
-              console.warn(
-                `\n  ⚠️  Failed to fetch ${item.path}: ${e.message || e}`
-              );
-            }
-          }
-        }
+          next();
+        });
+      } else {
+        stream.on("end", next);
       }
-    } catch (e: any) {
-      console.warn(
-        `\n  ⚠️  Failed to fetch directory ${path}: ${e.message || e}`
-      );
-    }
-  }
+      stream.resume();
+    });
 
-  await fetchDir();
-  if (fileCount > 0) {
-    process.stdout.write(`\r    ${fileCount} files fetched ✓\n`);
-  }
-  return files;
+    extract.on("finish", () => {
+      console.log(
+        `  ✓ Extracted ${entries.length} files (${skipped} unchanged, skipped)`
+      );
+      resolve({ files: entries, newCache, skipped });
+    });
+
+    extract.on("error", reject);
+
+    // Pipe buffer through gunzip then tar extract
+    const { createGunzip } = require("zlib");
+    const gunzip = createGunzip();
+
+    const readable = new Readable();
+    readable.push(buffer);
+    readable.push(null);
+
+    readable.pipe(gunzip).pipe(extract);
+  });
 }
+
+function shouldSkipPath(path: string): boolean {
+  const parts = path.split("/");
+  return parts.some((part) => SKIP_DIRS.has(part));
+}
+
+function hasValidExtension(path: string): boolean {
+  const ext = path.substring(path.lastIndexOf("."));
+  return ext in EXTENSIONS;
+}
+
+// ============== CHUNKING ==============
 
 function chunkContent(content: string, maxChars: number = 2000): string[] {
   const lines = content.split("\n");
@@ -305,13 +360,18 @@ function chunkContent(content: string, maxChars: number = 2000): string[] {
   return chunks;
 }
 
-async function getEmbedding(text: string): Promise<number[]> {
+// ============== EMBEDDINGS ==============
+
+async function getEmbeddings(texts: string[]): Promise<number[][]> {
+  // OpenAI supports batch embeddings
   const response = await openai.embeddings.create({
     model: "text-embedding-3-small",
-    input: text.substring(0, 8000), // Limit input size
+    input: texts.map((t) => t.substring(0, 8000)),
   });
-  return response.data[0].embedding;
+  return response.data.map((d) => d.embedding);
 }
+
+// ============== VECTORIZE (BATCHED!) ==============
 
 async function upsertToVectorize(
   vectors: Array<{
@@ -342,12 +402,34 @@ async function upsertToVectorize(
   return response.json();
 }
 
+// ============== MAIN INDEXING ==============
+
 async function indexRepository(owner: string, repo: string, branch: string) {
-  console.log(`\nIndexing ${owner}/${repo}...`);
+  console.log(`\n📂 Indexing ${owner}/${repo}...`);
 
-  const files = await getRepoFiles(owner, repo, branch);
-  console.log(`  Found ${files.length} files`);
+  const repoKey = `${owner}/${repo}`;
 
+  // Get existing cache for incremental indexing
+  const existingCache = await getFileCache(repoKey);
+  const cacheSize = Object.keys(existingCache).length;
+  if (cacheSize > 0) {
+    console.log(`  📋 Found cache with ${cacheSize} file hashes`);
+  }
+
+  // Download and extract repo (FAST!)
+  const { files, newCache, skipped } = await getRepoFilesFast(
+    owner,
+    repo,
+    branch,
+    existingCache
+  );
+
+  if (files.length === 0) {
+    console.log(`  ⏭️  No changed files, skipping`);
+    return { success: true, documents: 0, skipped };
+  }
+
+  // Create document chunks
   const documents: Document[] = [];
   let docCounter = 0;
 
@@ -358,16 +440,15 @@ async function indexRepository(owner: string, repo: string, branch: string) {
     const chunks = chunkContent(file.content);
 
     for (let i = 0; i < chunks.length; i++) {
-      // Use short hash-based ID to stay under 64 bytes
       const shortId = `${repo.substring(0, 10)}-${docCounter++}`;
       documents.push({
         id: shortId,
         content: chunks[i],
         metadata: {
-          repository: `${owner}/${repo}`,
+          repository: repoKey,
           filePath: file.path,
           language,
-          startLine: i * 50, // Approximate
+          startLine: i * 50,
           endLine: (i + 1) * 50,
           indexedAt: INDEXED_AT,
         },
@@ -375,77 +456,74 @@ async function indexRepository(owner: string, repo: string, branch: string) {
     }
   }
 
-  console.log(`  Created ${documents.length} chunks`);
+  console.log(
+    `  📄 Created ${documents.length} chunks from ${files.length} files`
+  );
 
-  // Process in batches
-  const BATCH_SIZE = 50;
+  // Process in larger batches (100 embeddings at a time, 100 vectors per upsert)
+  const BATCH_SIZE = 100;
+  let totalProcessed = 0;
+
   for (let i = 0; i < documents.length; i += BATCH_SIZE) {
     const batch = documents.slice(i, i + BATCH_SIZE);
-    console.log(
-      `  Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(documents.length / BATCH_SIZE)}`
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(documents.length / BATCH_SIZE);
+
+    process.stdout.write(
+      `\r  ⚡ Processing batch ${batchNum}/${totalBatches}...`
     );
 
-    const vectors = await Promise.all(
-      batch.map(async (doc) => {
-        const embedding = await getEmbedding(doc.content);
-        return {
-          id: doc.id,
-          values: embedding,
-          metadata: {
-            ...doc.metadata,
-            content: doc.content.substring(0, 1000), // Store truncated content in metadata
-          },
-        };
-      })
-    );
+    // Batch embedding call (much faster!)
+    const embeddings = await getEmbeddings(batch.map((d) => d.content));
 
+    const vectors = batch.map((doc, idx) => ({
+      id: doc.id,
+      values: embeddings[idx],
+      metadata: {
+        ...doc.metadata,
+        content: doc.content.substring(0, 1000),
+      },
+    }));
+
+    // Batch upsert to Vectorize
     await upsertToVectorize(vectors);
+    totalProcessed += batch.length;
 
-    // Rate limit
-    await new Promise((r) => setTimeout(r, 1000));
+    // Small delay to avoid OpenAI rate limits
+    if (i + BATCH_SIZE < documents.length) {
+      await sleep(500);
+    }
   }
 
-  console.log(`  ✓ Indexed ${documents.length} documents`);
-  return { success: true, documents: documents.length };
+  console.log(`\r  ✅ Indexed ${totalProcessed} documents                    `);
+
+  // Update cache for next run
+  await setFileCache(repoKey, newCache);
+
+  return { success: true, documents: documents.length, skipped };
 }
 
 interface IndexResult {
   repo: string;
   success: boolean;
   documents: number;
+  skipped: number;
   error?: string;
 }
 
 async function main() {
-  console.log("Starting Midnight repository indexing...");
+  console.log("🚀 Starting Midnight repository indexing (FAST MODE)");
+  console.log("=".repeat(50));
   console.log(`Target: Cloudflare Vectorize index '${VECTORIZE_INDEX}'`);
   console.log(`Time: ${new Date().toISOString()}`);
-  console.log(`Repos to index: ${REPOSITORIES.length}\n`);
-
-  // Check rate limit before starting
-  try {
-    const { data: rateLimit } = await octokit.rest.rateLimit.get();
-    const remaining = rateLimit.rate.remaining;
-    const resetTime = new Date(rateLimit.rate.reset * 1000);
-    console.log(
-      `GitHub API rate limit: ${remaining}/${rateLimit.rate.limit} remaining`
-    );
-    console.log(`Resets at: ${resetTime.toISOString()}\n`);
-
-    if (remaining < 500) {
-      console.warn(`⚠️  Low rate limit! Waiting until reset...`);
-      const waitMs = rateLimit.rate.reset * 1000 - Date.now() + 5000;
-      if (waitMs > 0) {
-        console.log(`   Waiting ${Math.ceil(waitMs / 60000)} minutes...`);
-        await sleep(waitMs);
-      }
-    }
-  } catch (e) {
-    console.warn("Could not check rate limit, proceeding anyway...");
-  }
+  console.log(`Repos to index: ${REPOSITORIES.length}`);
+  console.log(
+    `Optimizations: Tarball download, Batch embeddings, Incremental\n`
+  );
 
   const results: IndexResult[] = [];
   let totalDocs = 0;
+  let totalSkipped = 0;
   let failedRepos: string[] = [];
 
   for (const { owner, repo, branch } of REPOSITORIES) {
@@ -456,11 +534,13 @@ async function main() {
         repo: repoName,
         success: true,
         documents: result.documents,
+        skipped: result.skipped,
       });
       totalDocs += result.documents;
+      totalSkipped += result.skipped;
 
-      // Small delay between repos (5s) - exponential backoff handles actual rate limits
-      await sleep(5000);
+      // Small delay between repos
+      await sleep(2000);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`\n❌ Failed to index ${repoName}: ${errorMsg}`);
@@ -468,10 +548,10 @@ async function main() {
         repo: repoName,
         success: false,
         documents: 0,
+        skipped: 0,
         error: errorMsg,
       });
       failedRepos.push(repoName);
-      // Continue with next repo instead of stopping
     }
   }
 
@@ -482,25 +562,32 @@ async function main() {
 
   for (const result of results) {
     const status = result.success ? "✅" : "❌";
-    const docs = result.success
-      ? `${result.documents} docs`
-      : result.error?.substring(0, 50);
-    console.log(`${status} ${result.repo}: ${docs}`);
+    if (result.success) {
+      const skipInfo =
+        result.skipped > 0 ? ` (${result.skipped} unchanged)` : "";
+      console.log(
+        `${status} ${result.repo}: ${result.documents} docs${skipInfo}`
+      );
+    } else {
+      console.log(
+        `${status} ${result.repo}: ${result.error?.substring(0, 50)}`
+      );
+    }
   }
 
   console.log("-".repeat(50));
-  console.log(`Total documents indexed: ${totalDocs}`);
+  console.log(`📄 Total documents indexed: ${totalDocs}`);
+  console.log(`⏭️  Total files skipped (unchanged): ${totalSkipped}`);
   console.log(
-    `Successful repos: ${results.filter((r) => r.success).length}/${REPOSITORIES.length}`
+    `✅ Successful repos: ${results.filter((r) => r.success).length}/${REPOSITORIES.length}`
   );
 
   if (failedRepos.length > 0) {
     console.log(`\n⚠️  Failed repos: ${failedRepos.join(", ")}`);
-    // Exit with error code if any repos failed (for CI notification)
     process.exit(1);
   }
 
-  console.log("\n✅ Indexing complete!");
+  console.log("\n🎉 Indexing complete!");
 }
 
 main().catch((error) => {
