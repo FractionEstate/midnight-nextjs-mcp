@@ -86,8 +86,19 @@ export circuit transfer(to: PubKey, amount: Uint<64>) {
 - `midnight-analyze-contract` - structure, patterns, security
 - `midnight-explain-circuit` - what a circuit does
 
+**AI-powered tools** - generate and review (requires MCP Sampling):
+
+- `midnight-generate-contract` - generate from natural language
+- `midnight-review-contract` - AI security review
+- `midnight-document-contract` - generate documentation
+
 **Repository tools** - fetch files:
 
 - `midnight-get-file` - any file
 - `midnight-list-examples` - example contracts
 - `midnight-get-latest-updates` - recent commits
+
+**Health tools** - monitoring:
+
+- `midnight-health-check` - server status
+- `midnight-get-status` - rate limits, cache

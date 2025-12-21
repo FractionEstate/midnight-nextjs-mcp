@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-12-21
+
+### Fixed
+
+- Throw error on invalid subscription URIs (was silent success)
+- Add validation for sampling response structure
+- Safe JSON parsing with error handling in AI review tool
+- Align output schemas with actual function return types
+- Add `clearSubscriptions()` for server reset/testing
+
+## [0.1.0] - 2025-12-21
+
+### Added
+
+- **3 AI-Powered Tools** (require MCP Sampling support):
+  - `midnight-generate-contract` - Generate contracts from natural language
+  - `midnight-review-contract` - AI security review with suggestions
+  - `midnight-document-contract` - Generate markdown/jsdoc documentation
+
+- **Tool Annotations** on all 19 tools:
+  - `readOnlyHint`, `idempotentHint`, `openWorldHint`, `longRunningHint`
+  - Human-readable `title` for UI display
+
+- **Structured Output Schemas**: JSON schemas for tool outputs
+
+- **Resource Templates** (RFC 6570 URI Templates):
+  - `midnight://code/{owner}/{repo}/{path}`
+  - `midnight://docs/{section}/{topic}`
+  - `midnight://examples/{category}/{name}`
+  - `midnight://schema/{type}`
+
+- **Sampling Capability**: Server can request LLM completions from client
+
+- **Resource Subscriptions**: Subscribe/unsubscribe to resource changes
+
+- **Expanded Indexing**:
+  - Now indexing `/blog` posts from midnight-docs
+  - Now indexing `/docs/api` reference documentation
+  - 26,142 documents indexed (up from ~22,000)
+  - 24 repositories (removed broken rs-merkle)
+
+## [0.0.9] - 2025-12-20
+
+### Added
+
+- Expanded repository coverage to 25 repos
+- Added ZK libraries: halo2, midnight-trusted-setup, rs-merkle
+- Added developer tools: compact-tree-sitter, compact-zed, setup-compact-action
+- Added community repos: contributor-hub, night-token-distribution
+
 ## [0.0.2] - 2025-12-19
 
 ### Changed

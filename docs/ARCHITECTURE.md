@@ -13,7 +13,8 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │                      midnight-mcp                                │
 │  ┌────────────┐  ┌─────────────┐  ┌────────────┐                │
-│  │ 16 Tools   │  │ 20 Resources│  │ 5 Prompts  │                │
+│  │ 19 Tools   │  │ 20 Resources│  │ 5 Prompts  │                │
+│  │ + 4 Templ  │  │ + Sampling  │  │            │                │
 │  └────────────┘  └─────────────┘  └────────────┘                │
 └──────────────────────────────────────────────────────────────────┘
                               │
@@ -38,18 +39,20 @@
 
 ## Repositories
 
-### Indexed for Semantic Search (6)
+### Indexed for Semantic Search (24)
 
-Core repositories indexed in the vector database for semantic search:
+All public Midnight repositories are indexed (~26,000 documents):
 
-| Repository                       | Contents                  |
-| -------------------------------- | ------------------------- |
-| `compact`                        | Compact language, stdlib  |
-| `midnight-js`                    | TypeScript SDK            |
-| `midnight-docs`                  | Official documentation    |
-| `example-counter`                | Counter contract example  |
-| `example-bboard`                 | Bulletin board DApp       |
-| `OpenZeppelin/compact-contracts` | Audited contract patterns |
+| Category            | Repositories                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Core Language & SDK | compact, midnight-js, midnight-wallet, midnight-dapp-connector-api                  |
+| Infrastructure      | midnight-node, midnight-indexer, midnight-ledger, midnight-zk                       |
+| Documentation       | midnight-docs (incl. blog, /compact, API ref), midnight-improvement-proposals       |
+| Examples            | example-counter, example-bboard, example-dex, midnight-awesome-dapps, create-mn-app |
+| ZK & Cryptography   | halo2, midnight-trusted-setup                                                       |
+| Developer Tools     | compact-tree-sitter, compact-zed, setup-compact-action, midnight-node-docker        |
+| Community           | contributor-hub, night-token-distribution                                           |
+| Third-Party         | OpenZeppelin/compact-contracts                                                      |
 
 ### Available via GitHub Tools (16)
 
@@ -89,6 +92,31 @@ Additional repositories accessible via `midnight-get-file` and other GitHub tool
 | `midnight-get-latest-syntax`      | Canonical syntax reference                     |
 | `midnight-health-check`           | Server health                                  |
 | `midnight-get-status`             | Rate limits, cache stats                       |
+| `midnight-generate-contract`      | AI-generate contracts from natural language    |
+| `midnight-review-contract`        | AI-powered security review                     |
+| `midnight-document-contract`      | AI-generate documentation                      |
+
+### Advanced MCP Features (v0.1.0+)
+
+**Tool Annotations**: All tools include behavioral hints:
+
+- `readOnlyHint` - Tool doesn't modify state
+- `idempotentHint` - Safe to retry
+- `openWorldHint` - May return external data
+- `longRunningHint` - May take time
+
+**Output Schemas**: JSON schemas for structured tool outputs.
+
+**Resource Templates** (RFC 6570):
+
+- `midnight://code/{owner}/{repo}/{path}` - Any code file
+- `midnight://docs/{section}/{topic}` - Documentation
+- `midnight://examples/{category}/{name}` - Example contracts
+- `midnight://schema/{type}` - JSON schemas
+
+**Sampling**: Server can request LLM completions via client (for AI tools).
+
+**Subscriptions**: Subscribe to resource change notifications.
 
 ### Resources (`src/resources/`)
 

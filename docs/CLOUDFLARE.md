@@ -73,16 +73,18 @@ Native vector database on Cloudflare:
 
 ### Indexed Content
 
-Repositories indexed:
+24 repositories indexed (~26,000 documents):
 
-| Repository                     | Content                  |
-| ------------------------------ | ------------------------ |
-| midnightntwrk/compact          | Compact language, stdlib |
-| midnightntwrk/midnight-js      | TypeScript SDK           |
-| midnightntwrk/midnight-docs    | Documentation            |
-| midnightntwrk/example-counter  | Counter contract         |
-| midnightntwrk/example-bboard   | Bulletin board DApp      |
-| OpenZeppelin/compact-contracts | Audited patterns         |
+| Category            | Repositories                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Core Language & SDK | compact, midnight-js, midnight-wallet, midnight-dapp-connector-api                  |
+| Infrastructure      | midnight-node, midnight-indexer, midnight-ledger, midnight-zk                       |
+| Documentation       | midnight-docs (blog + API ref), midnight-improvement-proposals                      |
+| Examples            | example-counter, example-bboard, example-dex, midnight-awesome-dapps, create-mn-app |
+| ZK & Cryptography   | halo2, midnight-trusted-setup                                                       |
+| Developer Tools     | compact-tree-sitter, compact-zed, setup-compact-action, midnight-node-docker        |
+| Community           | contributor-hub, night-token-distribution                                           |
+| Third-Party         | OpenZeppelin/compact-contracts                                                      |
 
 ## Deployment
 

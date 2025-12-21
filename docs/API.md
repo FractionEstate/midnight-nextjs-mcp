@@ -126,6 +126,76 @@ Explain circuit logic.
 
 ---
 
+### AI-Powered Tools
+
+These tools require a client with MCP Sampling support (e.g., Claude Desktop).
+
+#### midnight-generate-contract
+
+Generate Compact contracts from natural language requirements.
+
+```typescript
+// Input
+{
+  requirements: string;  // Natural language description
+  contractType?: "counter" | "token" | "voting" | "custom";
+  baseExample?: string;  // Example code to base on
+}
+
+// Output
+{
+  code: string;           // Generated Compact code
+  explanation: string;    // What the contract does
+  warnings: string[];     // Any caveats
+  samplingAvailable: boolean;
+}
+```
+
+#### midnight-review-contract
+
+AI-powered security review of contracts.
+
+```typescript
+// Input
+{
+  code: string;  // Contract to review
+}
+
+// Output
+{
+  summary: string;
+  issues: Array<{
+    severity: "error" | "warning" | "info";
+    line?: number;
+    message: string;
+    suggestion?: string;
+  }>;
+  improvedCode?: string;
+  samplingAvailable: boolean;
+}
+```
+
+#### midnight-document-contract
+
+Generate documentation for contracts.
+
+```typescript
+// Input
+{
+  code: string;
+  format?: "markdown" | "jsdoc";
+}
+
+// Output
+{
+  documentation: string;
+  format: string;
+  samplingAvailable: boolean;
+}
+```
+
+---
+
 ### Repository Tools
 
 #### midnight-get-file
