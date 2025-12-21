@@ -298,7 +298,13 @@ async function getRepoFilesFast(
       const chunks: Buffer[] = [];
 
       // Remove the repo-branch prefix from path (e.g., "compact-main/src/..." -> "src/...")
-      const fullPath = header.name;
+      const fullPath = header.path || header.name || "";
+      if (!fullPath) {
+        stream.on("end", next);
+        stream.resume();
+        return;
+      }
+      
       const pathParts = fullPath.split("/");
       pathParts.shift(); // Remove first segment (repo-branch)
       const relativePath = pathParts.join("/");
