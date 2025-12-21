@@ -162,20 +162,47 @@ async function getRepoFiles(
 
       for (const item of data) {
         if (item.type === "dir") {
-          // Skip build artifacts, dependencies, and versioned doc folders
+          // Skip build artifacts, dependencies, tests, and config directories
           const skipDirs = [
+            // Build outputs
             "node_modules",
             "dist",
             "build",
-            ".git",
-            "target", // Rust build output
-            "vendor", // Vendored dependencies
-            "__pycache__",
+            "target",        // Rust
             ".next",
+            "out",
+            
+            // Version control & config
+            ".git",
+            ".github",       // Workflows not useful for code search
+            ".husky",
+            ".vscode",
+            ".idea",
+            
+            // Caches
+            ".cache",
+            ".turbo",
+            "__pycache__",
+            ".parcel-cache",
+            
+            // Test artifacts (keep actual test code, skip generated)
             "coverage",
-            "versioned_docs", // Docusaurus versioned docs (redundant)
+            "__snapshots__",
+            "__mocks__",
+            "fixtures",
+            "testdata",
+            
+            // Dependencies
+            "vendor",
+            
+            // Docs redundancy
+            "versioned_docs",    // Docusaurus versions (duplicates)
             "versioned_sidebars",
-            "i18n", // Translations (usually duplicates)
+            "i18n",              // Translations
+            "static",            // Images/assets
+            
+            // Rust specific
+            "benches",           // Benchmarks not useful for API
           ];
           if (!skipDirs.includes(item.name)) {
             await fetchDir(item.path);
