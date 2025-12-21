@@ -21,7 +21,7 @@ import { resolve } from "path";
 config({ path: resolve(__dirname, "../../.env") });
 
 import type { Document, IndexResult, FileCache } from "./interfaces";
-import { REPOSITORIES, EXTENSIONS } from "./constants";
+import { REPOSITORIES } from "./constants";
 import { chunkContent, getLanguageFromPath, sleep } from "./utils";
 import {
   getFileCache,

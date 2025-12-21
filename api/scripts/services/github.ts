@@ -20,7 +20,6 @@ export async function getRepoFilesFast(
   branch: string,
   existingCache: FileCache
 ): Promise<ExtractionResult> {
-  const files: Array<{ path: string; content: string }> = [];
   const newCache: FileCache = {};
   let skipped = 0;
 
@@ -106,6 +105,10 @@ export async function getRepoFilesFast(
     const readable = new Readable();
     readable.push(buffer);
     readable.push(null);
+
+    // Ensure errors from all streams propagate
+    readable.on("error", reject);
+    gunzip.on("error", reject);
 
     readable.pipe(gunzip).pipe(extract);
   });

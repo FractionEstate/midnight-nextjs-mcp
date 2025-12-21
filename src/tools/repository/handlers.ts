@@ -94,7 +94,7 @@ export async function listExamples(input: ListExamplesInput) {
   logger.debug("Listing examples", { category: input.category });
 
   let filteredExamples = EXAMPLES;
-  if (input.category !== "all") {
+  if (input.category && input.category !== "all") {
     filteredExamples = EXAMPLES.filter((e) => e.category === input.category);
   }
 
