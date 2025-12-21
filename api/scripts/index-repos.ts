@@ -164,8 +164,6 @@ async function getRepoFiles(
         if (item.type === "dir") {
           if (!["node_modules", "dist", "build", ".git"].includes(item.name)) {
             await fetchDir(item.path);
-            // Small delay between directory fetches to avoid rate limits
-            await sleep(100);
           }
         } else if (item.type === "file") {
           const ext = item.name.substring(item.name.lastIndexOf("."));
@@ -190,9 +188,9 @@ async function getRepoFiles(
                 if (fileCount % 50 === 0) {
                   process.stdout.write(`\r    ${fileCount} files fetched...`);
                 }
-                // Delay every 10 files to stay well under rate limit
-                if (fileCount % 10 === 0) {
-                  await sleep(200);
+                // Small delay every 100 files as a safety net
+                if (fileCount % 100 === 0) {
+                  await sleep(500);
                 }
               }
             } catch (e: any) {
@@ -394,11 +392,8 @@ async function main() {
       });
       totalDocs += result.documents;
 
-      // Delay between repos to spread out GitHub API usage
-      console.log(
-        `  ⏳ Waiting 30s before next repo to respect rate limits...`
-      );
-      await sleep(30000);
+      // Small delay between repos (5s) - exponential backoff handles actual rate limits
+      await sleep(5000);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`\n❌ Failed to index ${repoName}: ${errorMsg}`);
