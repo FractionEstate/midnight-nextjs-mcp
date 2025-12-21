@@ -4,7 +4,7 @@ on:
   # Check for new releases every 6 hours
   schedule:
     - cron: "0 */6 * * *"
-  
+
   # Manual trigger
   workflow_dispatch:
 
@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_reindex: ${{ steps.check.outputs.should_reindex }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Check for recent releases
         id: check
         env:
@@ -24,12 +24,12 @@ jobs:
         run: |
           # Repos to monitor
           REPOS="midnightntwrk/compact midnightntwrk/midnight-js midnightntwrk/midnight-docs"
-          
+
           SHOULD_REINDEX="false"
           SIX_HOURS_AGO=$(date -u -d '6 hours ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-6H +%Y-%m-%dT%H:%M:%SZ)
-          
+
           echo "Checking for releases since $SIX_HOURS_AGO"
-          
+
           for REPO in $REPOS; do
             echo "Checking $REPO..."
             
@@ -53,9 +53,9 @@ jobs:
               SHOULD_REINDEX="true"
             fi
           done
-          
+
           echo "should_reindex=$SHOULD_REINDEX" >> $GITHUB_OUTPUT
-          
+
           if [ "$SHOULD_REINDEX" = "true" ]; then
             echo "🔄 Will trigger reindex"
           else
@@ -66,12 +66,12 @@ jobs:
     needs: check-releases
     if: needs.check-releases.outputs.should_reindex == 'true'
     runs-on: ubuntu-latest
-    
+
     # Prevent concurrent indexing runs
     concurrency:
       group: midnight-indexing
-      cancel-in-progress: false  # Don't cancel running jobs, just skip new ones
-    
+      cancel-in-progress: false # Don't cancel running jobs, just skip new ones
+
     steps:
       - name: Trigger indexing workflow
         env:

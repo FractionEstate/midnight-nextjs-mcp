@@ -21,7 +21,7 @@ on:
 # Prevent multiple indexing runs at the same time
 concurrency:
   group: midnight-indexing
-  cancel-in-progress: false  # Let running jobs finish, skip new triggers
+  cancel-in-progress: false # Let running jobs finish, skip new triggers
 
 jobs:
   index:
