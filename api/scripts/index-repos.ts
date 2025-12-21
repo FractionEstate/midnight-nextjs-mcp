@@ -162,7 +162,22 @@ async function getRepoFiles(
 
       for (const item of data) {
         if (item.type === "dir") {
-          if (!["node_modules", "dist", "build", ".git"].includes(item.name)) {
+          // Skip build artifacts, dependencies, and versioned doc folders
+          const skipDirs = [
+            "node_modules",
+            "dist",
+            "build",
+            ".git",
+            "target", // Rust build output
+            "vendor", // Vendored dependencies
+            "__pycache__",
+            ".next",
+            "coverage",
+            "versioned_docs", // Docusaurus versioned docs (redundant)
+            "versioned_sidebars",
+            "i18n", // Translations (usually duplicates)
+          ];
+          if (!skipDirs.includes(item.name)) {
             await fetchDir(item.path);
           }
         } else if (item.type === "file") {

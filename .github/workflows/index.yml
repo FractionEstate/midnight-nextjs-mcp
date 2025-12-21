@@ -26,7 +26,7 @@ concurrency:
 jobs:
   index:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # Prevent runaway jobs
+    timeout-minutes: 180 # Allow up to 3 hours for full reindex
     environment: CLOUDFLARE # Use the CLOUDFLARE environment for secrets
 
     steps:
