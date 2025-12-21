@@ -476,7 +476,45 @@ app.get("/dashboard", async (c) => {
     .tag.low { background: rgba(239,68,68,.2); color: #ef4444; }
     .empty { color: var(--muted); text-align: center; padding: 32px; font-size: 14px; }
     .full-width { grid-column: 1 / -1; }
-    @media (max-width: 768px) { .metrics, .grid { grid-template-columns: 1fr; } }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      body { padding: 16px; }
+      header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      header h1 { font-size: 18px; }
+      header > div { display: flex; align-items: center; width: 100%; justify-content: space-between; }
+      .metrics, .grid { grid-template-columns: 1fr; }
+      .metric { padding: 16px; }
+      .metric-value { font-size: 26px; }
+      .card { padding: 16px; }
+      .quality { flex-wrap: wrap; }
+      .q-box { min-width: calc(50% - 6px); flex: 0 0 auto; }
+      .q-num { font-size: 22px; }
+      .bar-name { width: 70px; font-size: 12px; }
+      .bar-val { width: 35px; font-size: 12px; margin-left: 8px; }
+      
+      /* Table mobile view */
+      table { font-size: 12px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      th, td { padding: 8px; white-space: nowrap; }
+      td:first-child { max-width: 150px !important; }
+    }
+    
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      header h1 { font-size: 16px; }
+      .btn { padding: 6px 12px; font-size: 12px; }
+      .metric-value { font-size: 22px; }
+      .metric-label { font-size: 11px; }
+      .card-title { font-size: 12px; margin-bottom: 12px; }
+      .q-box { min-width: 100%; padding: 12px 8px; }
+      .q-num { font-size: 20px; }
+      .bar-name { width: 60px; font-size: 11px; }
+      .bar-track { height: 6px; }
+      .bar-val { width: 30px; font-size: 11px; }
+      
+      /* Stack quality boxes vertically */
+      .quality { flex-direction: column; gap: 8px; }
+    }
   </style>
 </head>
 <body>
