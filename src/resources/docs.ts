@@ -6,13 +6,7 @@
 import { githubClient } from "../pipeline/index.js";
 import { logger } from "../utils/index.js";
 import { EMBEDDED_DOCS } from "./content/index.js";
-
-export interface ResourceDefinition {
-  uri: string;
-  name: string;
-  description: string;
-  mimeType: string;
-}
+import type { ResourceDefinition } from "./schemas.js";
 
 // Documentation resource URIs
 export const documentationResources: ResourceDefinition[] = [
