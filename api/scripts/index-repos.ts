@@ -23,7 +23,6 @@ import { createHash } from "crypto";
 // Load .env from parent directory (project root)
 config({ path: resolve(__dirname, "../../.env") });
 
-import { Octokit } from "octokit";
 import OpenAI from "openai";
 
 const VECTORIZE_INDEX = "midnight-code";
@@ -50,7 +49,6 @@ if (!GITHUB_TOKEN) {
   console.warn("   Set GITHUB_TOKEN for faster indexing\n");
 }
 
-const octokit = new Octokit({ auth: GITHUB_TOKEN });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 function sleep(ms: number): Promise<void> {
@@ -255,7 +253,7 @@ async function deleteVectors(ids: string[]): Promise<void> {
   }
 }
 
-// ============== TARBALL DOWNLOAD (FAST!) ==
+// ============== TARBALL DOWNLOAD (FAST!) ==============
 
 async function getRepoFilesFast(
   owner: string,
