@@ -8,6 +8,8 @@ MCP server that gives AI assistants access to Midnight blockchain—search contr
 
 ## Quick Start
 
+### Claude Desktop
+
 Add to your `claude_desktop_config.json`:
 
 ```json
@@ -21,7 +23,81 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop. All features work out of the box—no API keys or setup required.
+<details>
+<summary><strong>📍 Config file locations</strong></summary>
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+</details>
+
+### Cursor
+
+Add to Cursor's MCP settings (Settings → MCP → Add Server):
+
+```json
+{
+  "mcpServers": {
+    "midnight": {
+      "command": "npx",
+      "args": ["-y", "midnight-mcp"]
+    }
+  }
+}
+```
+
+Or add to `.cursor/mcp.json` in your project:
+
+```json
+{
+  "mcpServers": {
+    "midnight": {
+      "command": "npx",
+      "args": ["-y", "midnight-mcp"]
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "midnight": {
+      "command": "npx",
+      "args": ["-y", "midnight-mcp"]
+    }
+  }
+}
+```
+
+### Continue.dev
+
+Add to `~/.continue/config.json`:
+
+```json
+{
+  "experimental": {
+    "modelContextProtocolServers": [
+      {
+        "transport": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "midnight-mcp"]
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+Restart your editor after adding the config. All features work out of the box—no API keys or setup required.
 
 ---
 

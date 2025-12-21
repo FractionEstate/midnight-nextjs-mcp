@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Midnight MCP! This guide will help you get started.
 
-## Getting Started
+## 🚀 Getting Started
 
 1. **Fork the repository**
 2. **Clone your fork**:
@@ -25,7 +25,25 @@ Thank you for your interest in contributing to Midnight MCP! This guide will hel
    npm test
    ```
 
-## Development Workflow
+## 📁 Project Structure
+
+```
+midnight-mcp/
+├── src/
+│   ├── index.ts          # Entry point
+│   ├── tools/            # MCP tools (search, analyze, etc.)
+│   ├── resources/        # MCP resources (docs, code, schemas)
+│   ├── prompts/          # MCP prompts
+│   ├── utils/            # Shared utilities
+│   └── db/               # Vector store (local mode)
+├── api/                  # Cloudflare Workers API (hosted backend)
+│   ├── src/              # API source
+│   └── scripts/          # Indexing scripts
+├── tests/                # Test files
+└── docs/                 # Documentation
+```
+
+## 🛠️ Development Workflow
 
 ### Running Locally
 
@@ -46,29 +64,67 @@ npx @modelcontextprotocol/inspector node dist/index.js
 - Use TypeScript strict mode
 - Follow existing code patterns
 - Add JSDoc comments for public functions
-- Run `npm run lint` before committing
 
-## Pull Request Process
+## 📝 Pull Request Process
 
 1. Create a feature branch: `git checkout -b feature/my-feature`
-2. Make your changes
+2. Make your changes with clear commits
 3. Add tests if applicable
 4. Ensure `npm run build` and `npm test` pass
-5. Commit with clear messages
-6. Push and open a PR against `main`
+5. Push and open a PR against `main`
 
-## Areas for Contribution
+### Commit Message Format
+
+Use conventional commits:
+
+```
+feat: add new search filter option
+fix: handle empty query gracefully
+docs: update README with Cursor config
+refactor: extract common validation logic
+test: add tests for analyze tool
+```
+
+### PR Checklist
+
+- [ ] Tests pass (`npm test`)
+- [ ] Build succeeds (`npm run build`)
+- [ ] Code follows existing style
+- [ ] Documentation updated if needed
+
+## 🎯 Areas for Contribution
 
 - **New Tools**: Add tools for additional Midnight functionality
 - **Documentation**: Improve docs and examples
 - **Bug Fixes**: Fix issues and improve reliability
 - **Performance**: Optimize caching and API calls
 - **Tests**: Increase test coverage
+- **Editor Support**: Add configs for more editors
 
-## Code of Conduct
+## 🐛 Reporting Issues
+
+When reporting bugs, please include:
+
+1. Description of the issue
+2. Steps to reproduce
+3. Expected vs actual behavior
+4. Environment (OS, Node version, editor)
+5. Logs if available
+
+## 💡 Feature Requests
+
+We welcome feature ideas! Please:
+
+1. Check existing issues first
+2. Describe the use case
+3. Explain the expected behavior
+
+## 🤝 Code of Conduct
 
 Be respectful and constructive. We're all here to build great tools for the Midnight ecosystem.
 
-## Questions?
+## 📞 Questions?
 
-Open an issue or start a discussion on GitHub.
+- **GitHub Issues**: For bugs and feature requests
+- **GitHub Discussions**: For questions and ideas
+- **Midnight Docs**: https://docs.midnight.network
