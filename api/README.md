@@ -109,11 +109,11 @@ The indexing process downloads all Midnight repositories and indexes them into C
 
 ### Configuration
 
-| Setting | Value | Description |
-|---------|-------|-------------|
-| Chunk size | 1000 chars | Smaller chunks for precise results |
-| Chunk overlap | 200 chars | Context continuity between chunks |
-| Keyword boost | Up to 20% | Boosts exact matches in content/filepath |
+| Setting       | Value      | Description                              |
+| ------------- | ---------- | ---------------------------------------- |
+| Chunk size    | 1000 chars | Smaller chunks for precise results       |
+| Chunk overlap | 200 chars  | Context continuity between chunks        |
+| Keyword boost | Up to 20%  | Boosts exact matches in content/filepath |
 
 ### Manual Re-indexing
 
@@ -141,6 +141,7 @@ https://midnight-mcp-api.midnightmcp.workers.dev/dashboard
 ```
 
 Shows:
+
 - Query volume (24h / 7d / 30d)
 - Average relevance scores
 - Quality distribution (High/Medium/Low)

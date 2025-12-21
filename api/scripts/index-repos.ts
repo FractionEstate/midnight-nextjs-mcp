@@ -206,7 +206,7 @@ async function getFileCache(repoKey: string): Promise<FileCache> {
   if (FORCE_REINDEX) {
     return {};
   }
-  
+
   try {
     const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/index-cache:${repoKey}`;
     const response = await fetch(url, {
@@ -619,7 +619,9 @@ async function main() {
   console.log(`Time: ${new Date().toISOString()}`);
   console.log(`Repos to index: ${REPOSITORIES.length}`);
   if (FORCE_REINDEX) {
-    console.log(`⚠️  FORCE REINDEX enabled - ignoring cache, reprocessing all files`);
+    console.log(
+      `⚠️  FORCE REINDEX enabled - ignoring cache, reprocessing all files`
+    );
   }
   console.log(
     `Optimizations: Tarball download, Batch embeddings${FORCE_REINDEX ? "" : ", Incremental"}\n`
