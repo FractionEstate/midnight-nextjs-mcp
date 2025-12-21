@@ -74,13 +74,40 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Repositories to index
+// Repositories to index - all high-value Midnight repos
 const REPOSITORIES = [
+  // Core language & SDK
   { owner: "midnightntwrk", repo: "compact", branch: "main" },
   { owner: "midnightntwrk", repo: "midnight-js", branch: "main" },
+  { owner: "midnightntwrk", repo: "midnight-wallet", branch: "main" },
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-dapp-connector-api",
+    branch: "main",
+  },
+
+  // Core infrastructure (Rust)
+  { owner: "midnightntwrk", repo: "midnight-node", branch: "main" },
+  { owner: "midnightntwrk", repo: "midnight-indexer", branch: "main" },
+  { owner: "midnightntwrk", repo: "midnight-ledger", branch: "main" },
+  { owner: "midnightntwrk", repo: "midnight-zk", branch: "main" },
+
+  // Documentation
   { owner: "midnightntwrk", repo: "midnight-docs", branch: "main" },
+  {
+    owner: "midnightntwrk",
+    repo: "midnight-improvement-proposals",
+    branch: "main",
+  },
+
+  // Examples & templates
   { owner: "midnightntwrk", repo: "example-counter", branch: "main" },
   { owner: "midnightntwrk", repo: "example-bboard", branch: "main" },
+  { owner: "midnightntwrk", repo: "example-dex", branch: "main" },
+  { owner: "midnightntwrk", repo: "midnight-awesome-dapps", branch: "main" },
+  { owner: "midnightntwrk", repo: "create-mn-app", branch: "main" },
+
+  // Third-party libraries
   { owner: "OpenZeppelin", repo: "compact-contracts", branch: "main" },
 ];
 
@@ -105,6 +132,9 @@ const EXTENSIONS: Record<string, string> = {
   ".compact": "compact",
   ".ts": "typescript",
   ".tsx": "typescript",
+  ".js": "javascript",
+  ".jsx": "javascript",
+  ".rs": "rust",
   ".md": "markdown",
   ".mdx": "markdown",
 };
