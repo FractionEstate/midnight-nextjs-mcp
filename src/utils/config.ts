@@ -211,10 +211,54 @@ export const DEFAULT_REPOSITORIES: RepositoryConfig[] = [
     exclude: [],
   },
 
-  // Partner Libraries
+  // Partner Libraries (OpenZeppelin)
   {
     owner: "OpenZeppelin",
     repo: "compact-contracts",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+  {
+    owner: "OpenZeppelin",
+    repo: "midnight-apps",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+
+  // Official Partners (from awesome-dapps)
+  {
+    owner: "bricktowers",
+    repo: "midnight-seabattle",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+  {
+    owner: "bricktowers",
+    repo: "midnight-identity",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+  {
+    owner: "bricktowers",
+    repo: "midnight-rwa",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+  {
+    owner: "MeshJS",
+    repo: "midnight-starter-template",
+    branch: "main",
+    patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
+    exclude: ["node_modules/**", "dist/**"],
+  },
+  {
+    owner: "midnames",
+    repo: "core",
     branch: "main",
     patterns: ["**/*.compact", "**/*.ts", "**/*.md"],
     exclude: ["node_modules/**", "dist/**"],

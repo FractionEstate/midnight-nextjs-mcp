@@ -131,6 +131,14 @@ export const REPOSITORIES: RepoConfig[] = [
   { owner: "midnightntwrk", repo: "contributor-hub", branch: "main" },
   { owner: "midnightntwrk", repo: "night-token-distribution", branch: "main" },
 
-  // Third-party libraries
+  // Third-party libraries (OpenZeppelin)
   { owner: "OpenZeppelin", repo: "compact-contracts", branch: "main" },
+  { owner: "OpenZeppelin", repo: "midnight-apps", branch: "main" }, // LunarSwap DEX
+
+  // Official Partners (🔹 from awesome-dapps)
+  { owner: "bricktowers", repo: "midnight-seabattle", branch: "main" }, // Gaming
+  { owner: "bricktowers", repo: "midnight-identity", branch: "main" }, // ZK Identity
+  { owner: "bricktowers", repo: "midnight-rwa", branch: "main" }, // Real World Assets
+  { owner: "MeshJS", repo: "midnight-starter-template", branch: "main" }, // Starter template
+  { owner: "midnames", repo: "core", branch: "main" }, // DID registry
 ];

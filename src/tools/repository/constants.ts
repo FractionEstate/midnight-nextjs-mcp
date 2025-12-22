@@ -69,6 +69,25 @@ export const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   "compact-contracts": { owner: "OpenZeppelin", repo: "compact-contracts" },
   openzeppelin: { owner: "OpenZeppelin", repo: "compact-contracts" },
   oz: { owner: "OpenZeppelin", repo: "compact-contracts" },
+  "midnight-apps": { owner: "OpenZeppelin", repo: "midnight-apps" },
+  lunarswap: { owner: "OpenZeppelin", repo: "midnight-apps" },
+
+  // Official Partners (from awesome-dapps)
+  "midnight-seabattle": { owner: "bricktowers", repo: "midnight-seabattle" },
+  seabattle: { owner: "bricktowers", repo: "midnight-seabattle" },
+  battleship: { owner: "bricktowers", repo: "midnight-seabattle" },
+  "midnight-identity": { owner: "bricktowers", repo: "midnight-identity" },
+  identity: { owner: "bricktowers", repo: "midnight-identity" },
+  "midnight-rwa": { owner: "bricktowers", repo: "midnight-rwa" },
+  rwa: { owner: "bricktowers", repo: "midnight-rwa" },
+  "midnight-starter-template": {
+    owner: "MeshJS",
+    repo: "midnight-starter-template",
+  },
+  meshjs: { owner: "MeshJS", repo: "midnight-starter-template" },
+  starter: { owner: "MeshJS", repo: "midnight-starter-template" },
+  midnames: { owner: "midnames", repo: "core" },
+  did: { owner: "midnames", repo: "core" },
 };
 
 // Example definitions
