@@ -1,16 +1,14 @@
-# Midnight MCP API (Cloudflare Workers)
+# Midnight MCP API
 
-Cloudflare Workers + Vectorize backend for midnight-mcp semantic search.
+Cloudflare Workers + Vectorize backend for semantic search.
 
-## Quick Start (Local Development)
+## Quick Start
 
 ```bash
-cd api
-npm install
-npm run dev  # Starts local server at http://localhost:8787
+npm install && npm run dev  # http://localhost:8787
 ```
 
-Then in another terminal, test it:
+Test it:
 
 ```bash
 curl -X POST http://localhost:8787/v1/search/compact \
@@ -18,41 +16,20 @@ curl -X POST http://localhost:8787/v1/search/compact \
   -d '{"query": "token transfer", "limit": 5}'
 ```
 
-> **Note:** Local dev uses Vectorize emulation. For full functionality, deploy to Cloudflare.
-
-## Full Setup (for deployment)
-
-### 1. Create Vectorize Index
+## Deployment
 
 ```bash
+# 1. Create Vectorize index
 npm run create-index
-```
 
-### 2. Add OpenAI API Key
-
-```bash
+# 2. Add secrets
 npx wrangler secret put OPENAI_API_KEY
-# Enter your OpenAI API key when prompted
-```
+npx wrangler secret put DASHBOARD_PASSWORD
 
-### 3. Index Repositories
-
-The indexing script loads from `../.env` automatically:
-
-```bash
-# Add to ../.env (project root):
-CLOUDFLARE_ACCOUNT_ID=your_account_id
-CLOUDFLARE_API_TOKEN=your_api_token
-OPENAI_API_KEY=your_openai_key
-GITHUB_TOKEN=your_github_token  # Optional, increases rate limit 60 → 5000 req/hr
-
-# Run indexing
+# 3. Index repositories (requires ../.env with CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, OPENAI_API_KEY)
 npm run index
-```
 
-### 4. Deploy
-
-```bash
+# 4. Deploy
 npm run deploy
 ```
 
@@ -61,21 +38,21 @@ npm run deploy
 | Endpoint                | Method | Description          |
 | ----------------------- | ------ | -------------------- |
 | `/health`               | GET    | Health check         |
-| `/v1/search`            | POST   | Generic search       |
 | `/v1/search/compact`    | POST   | Search Compact code  |
 | `/v1/search/typescript` | POST   | Search TypeScript    |
 | `/v1/search/docs`       | POST   | Search documentation |
+| `/dashboard?p=PASSWORD` | GET    | Analytics dashboard  |
 
-### Request Format
+<details>
+<summary><strong>Request/Response Format</strong></summary>
+
+**Request:**
 
 ```json
-{
-  "query": "your search query",
-  "limit": 10
-}
+{ "query": "your search query", "limit": 10 }
 ```
 
-### Response Format
+**Response:**
 
 ```json
 {
@@ -96,60 +73,45 @@ npm run deploy
 }
 ```
 
-## Indexing
+</details>
 
-The indexing process downloads **25 Midnight repositories** and indexes them into Cloudflare Vectorize:
+## Indexed Repositories (28)
 
-- Core: `compact`, `midnight-js`, `midnight-wallet`, `midnight-node`, `midnight-ledger`, `midnight-zk`
-- ZK/Crypto: `halo2`, `midnight-trusted-setup`, `rs-merkle`
-- Examples: `example-counter`, `example-bboard`, `example-dex`
-- Tools: `compact-tree-sitter`, `create-mn-app`, `setup-compact-action`
-- Docs: `midnight-docs`, `midnight-improvement-proposals`
-- And more...
+| Category  | Repositories                                                                                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Core      | `compact`, `midnight-js`, `midnight-wallet`, `midnight-node`, `midnight-ledger`, `midnight-zk`                                                                                                                     |
+| Examples  | `example-counter`, `example-bboard`, `example-dex`, `create-mn-app`                                                                                                                                                |
+| Docs      | `midnight-docs`, `midnight-improvement-proposals`, `midnight-awesome-dapps`                                                                                                                                        |
+| Tools     | `compact-tree-sitter`, `setup-compact-action`, `midnight-node-docker`                                                                                                                                              |
+| ZK/Crypto | `halo2`, `midnight-trusted-setup`                                                                                                                                                                                  |
+| Partners  | `OpenZeppelin/compact-contracts`, `OpenZeppelin/midnight-apps`, `bricktowers/midnight-seabattle`, `bricktowers/midnight-identity`, `bricktowers/midnight-rwa`, `MeshJS/midnight-starter-template`, `midnames/core` |
 
-### Features
+<details>
+<summary><strong>Indexing Configuration</strong></summary>
 
-- **Tarball download** — Downloads repo archives instead of cloning (10x faster)
-- **Batch embeddings** — Processes embeddings in parallel batches
-- **Incremental indexing** — Only re-indexes changed files (uses KV cache)
-- **Hybrid search** — Combines vector similarity with keyword boosting
+| Setting       | Value      | Description                        |
+| ------------- | ---------- | ---------------------------------- |
+| Chunk size    | 1000 chars | Smaller chunks for precise results |
+| Chunk overlap | 200 chars  | Context continuity                 |
+| Keyword boost | Up to 20%  | Boosts exact matches               |
 
-### Configuration
+**Features:**
 
-| Setting       | Value      | Description                              |
-| ------------- | ---------- | ---------------------------------------- |
-| Chunk size    | 1000 chars | Smaller chunks for precise results       |
-| Chunk overlap | 200 chars  | Context continuity between chunks        |
-| Keyword boost | Up to 20%  | Boosts exact matches in content/filepath |
+- Tarball download (10x faster than cloning)
+- Batch embeddings (parallel processing)
+- Incremental indexing (KV cache for changed files only)
+- Hybrid search (vector + keyword boosting)
 
-### Manual Re-indexing
+**Manual Re-index:** Actions → Index Repositories → Run workflow → Check "Force full reindex"
 
-To force a full re-index (ignoring cache):
+**Automated:** Daily at 6am UTC, on release, or manual trigger
 
-1. Go to **Actions** → **Index Repositories**
-2. Click **Run workflow**
-3. Check **"Force full reindex (ignore cache)"**
-4. Click **Run workflow**
-
-This is useful when chunk settings change or you want fresh embeddings.
-
-### Automated Triggers
-
-- **Daily**: Runs at 6am UTC
-- **On release**: Webhook trigger via `repository_dispatch`
-- **Manual**: Via GitHub Actions UI
+</details>
 
 ## Dashboard
 
-View search quality metrics at:
-
 ```
-https://midnight-mcp-api.midnightmcp.workers.dev/dashboard
+https://midnight-mcp-api.midnightmcp.workers.dev/dashboard?p=YOUR_PASSWORD
 ```
 
-Shows:
-
-- Query volume (24h / 7d / 30d)
-- Average relevance scores
-- Quality distribution (High/Medium/Low)
-- Top queries and search trends
+Shows query volume, relevance scores, quality distribution, and search trends.
