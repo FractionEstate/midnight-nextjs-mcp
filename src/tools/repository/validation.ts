@@ -156,6 +156,7 @@ export async function validateContract(input: ValidateContractInput) {
   let code: string;
   let filename: string;
   let sourceDir: string | null = null; // Track source directory for local includes
+  let originalFilePath: string | null = null; // Track original file path for compilation
 
   if (input.filePath) {
     // SECURITY: Validate file path first
@@ -178,6 +179,7 @@ export async function validateContract(input: ValidateContractInput) {
 
     const safePath = pathValidation.normalizedPath!;
     sourceDir = join(safePath, "..");
+    originalFilePath = safePath; // Store for use in compilation
 
     // Read code from file
     try {
@@ -557,20 +559,24 @@ export ledger counter: Counter;
     }
 
     // Run compilation
-    // When sourceDir is available (file path provided), run from source directory
-    // to resolve local includes. Otherwise run from temp directory.
+    // When originalFilePath is available (file path provided), compile the original file
+    // from its source directory to resolve local includes correctly.
+    // Otherwise, compile the temp file from the temp directory.
+    const fileToCompile = originalFilePath || contractPath;
+    const compileCwd = originalFilePath ? sourceDir! : tempDir;
+
     try {
       const execOptions = {
         timeout: 60000, // 60 second timeout
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-        cwd: sourceDir || tempDir, // Use source directory for include resolution
+        cwd: compileCwd, // Use appropriate directory for include resolution
       };
 
       // Use execFile with array arguments to avoid shell injection vulnerabilities
       // This is safer than string interpolation as paths are passed directly
       const { stdout, stderr } = await execFileAsync(
         "compact",
-        ["compile", contractPath, outputDir],
+        ["compile", fileToCompile, outputDir],
         execOptions
       );
 
