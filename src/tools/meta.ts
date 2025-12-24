@@ -324,6 +324,7 @@ export const metaTools: ExtendedToolDefinition[] = [
             "generation",
             "health",
             "compound",
+            "validation",
           ],
           description: "Category to list tools for",
         },

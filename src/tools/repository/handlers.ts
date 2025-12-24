@@ -925,7 +925,12 @@ export async function validateContract(input: ValidateContractInput) {
     }
   } else if (input.code) {
     code = input.code;
-    filename = input.filename || "contract.compact";
+    // Sanitize filename to prevent command injection
+    const rawFilename = input.filename || "contract.compact";
+    filename = rawFilename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    if (!filename.endsWith(".compact")) {
+      filename = "contract.compact";
+    }
 
     // Check for binary content in provided code
     if (!isValidUtf8Text(code)) {
