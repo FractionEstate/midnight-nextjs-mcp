@@ -443,8 +443,9 @@ export ledger counter: Counter;
       // Unix: use which to find compact
       const { stdout: whichOutput } = await execAsync("which compact");
       compactPath = whichOutput.trim().split(/\r?\n/)[0];
-      const { stdout: versionOutput } = await execAsync(
-        `"${compactPath}" compile --version`
+      const { stdout: versionOutput } = await execFileAsync(
+        compactPath,
+        ["compile", "--version"]
       );
       compilerVersion = versionOutput.trim();
     }
