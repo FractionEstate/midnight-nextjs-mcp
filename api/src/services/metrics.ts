@@ -51,9 +51,9 @@ export function trackQuery(
       (metrics.queriesByLanguage[language] || 0) + 1;
   }
 
-  // Update score distribution (high > 0.8, medium 0.5-0.8, low < 0.5)
-  if (topScore > 0.8) metrics.scoreDistribution.high++;
-  else if (topScore >= 0.5) metrics.scoreDistribution.medium++;
+  // Update score distribution (high >= 0.7, medium 0.4-0.7, low < 0.4)
+  if (topScore >= 0.7) metrics.scoreDistribution.high++;
+  else if (topScore >= 0.4) metrics.scoreDistribution.medium++;
   else metrics.scoreDistribution.low++;
 
   // Rolling average for relevance score

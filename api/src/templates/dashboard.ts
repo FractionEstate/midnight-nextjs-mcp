@@ -191,12 +191,12 @@ function generateMetricsContent(
           <div class="q-box high has-tooltip">
             <div class="q-num">${metrics.scoreDistribution.high}</div>
             <div class="q-label">High</div>
-            <span class="tooltip">Queries with >70% relevance score. These found highly relevant content.</span>
+            <span class="tooltip">Queries with ≥70% relevance score. These found highly relevant content.</span>
           </div>
           <div class="q-box med has-tooltip">
             <div class="q-num">${metrics.scoreDistribution.medium}</div>
             <div class="q-label">Medium</div>
-            <span class="tooltip">Queries with 40-70% relevance. Results were somewhat relevant but could be improved.</span>
+            <span class="tooltip">Queries with 40-69% relevance. Results were somewhat relevant but could be improved.</span>
           </div>
           <div class="q-box low has-tooltip">
             <div class="q-num">${metrics.scoreDistribution.low}</div>
@@ -271,7 +271,7 @@ function generateQueriesTable(queries: Metrics["recentQueries"]): string {
           .slice(0, 15)
           .map(
             (q) =>
-              `<tr><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.query}</td><td>${q.endpoint}</td><td>${q.resultsCount}</td><td><span class="tag ${q.topScore > 0.8 ? "high" : q.topScore >= 0.5 ? "med" : "low"}">${(q.topScore * 100).toFixed(0)}%</span></td><td style="color:var(--muted)">${new Date(q.timestamp).toLocaleTimeString()}</td></tr>`
+              `<tr><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.query}</td><td>${q.endpoint}</td><td>${q.resultsCount}</td><td><span class="tag ${q.topScore >= 0.7 ? "high" : q.topScore >= 0.4 ? "med" : "low"}">${(q.topScore * 100).toFixed(0)}%</span></td><td style="color:var(--muted)">${new Date(q.timestamp).toLocaleTimeString()}</td></tr>`
           )
           .join("")}
       </tbody>
