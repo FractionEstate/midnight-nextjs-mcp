@@ -52,6 +52,28 @@ export ledger counter: Counter;
       expect(result.languageVersion).toBe("0.16");
     });
 
+    it("should extract pragma version with < operator", async () => {
+      const code = `pragma language_version < 0.17;
+
+export ledger counter: Counter;
+`;
+      const result = await extractContractStructure({ code });
+
+      expect(result.success).toBe(true);
+      expect(result.languageVersion).toBe("0.17");
+    });
+
+    it("should extract pragma version with <= operator", async () => {
+      const code = `pragma language_version <= 0.16;
+
+export ledger counter: Counter;
+`;
+      const result = await extractContractStructure({ code });
+
+      expect(result.success).toBe(true);
+      expect(result.languageVersion).toBe("0.16");
+    });
+
     it("should extract imports", async () => {
       const code = `pragma language_version >= 0.16;
 
@@ -115,6 +137,27 @@ export circuit transfer(from: Opaque<"address">, to: Opaque<"address">, amounts:
       expect(circuit?.params).toHaveLength(3);
       expect(circuit?.params[0]).toContain("Opaque");
       expect(circuit?.params[2]).toContain("Map<Field, Uint<64>>");
+    });
+
+    it("should handle function types in parameters", async () => {
+      const code = `pragma language_version >= 0.16;
+
+export circuit withCallback(fn: (a: Field, b: Field) => Boolean, data: Field): [] {
+  // implementation
+}
+`;
+      const result = await extractContractStructure({ code });
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      const circuit = result.structure!.circuits.find(
+        (c) => c.name === "withCallback"
+      );
+      expect(circuit).toBeDefined();
+      // With parentheses depth tracking, function types should not be split
+      expect(circuit?.params).toHaveLength(2);
+      expect(circuit?.params[0]).toContain("(a: Field, b: Field) => Boolean");
+      expect(circuit?.params[1]).toBe("data: Field");
     });
 
     it("should extract witness definitions", async () => {

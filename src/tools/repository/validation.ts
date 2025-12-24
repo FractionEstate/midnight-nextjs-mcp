@@ -42,7 +42,8 @@ function validateFilePath(filePath: string): {
   const normalized = resolve(filePath);
 
   // Check for path traversal attempts
-  if (normalized !== filePath && filePath.includes("..")) {
+  // Simply check for ".." in the path - this is always suspicious in absolute paths
+  if (filePath.includes("..")) {
     return {
       valid: false,
       error: "Path traversal detected - use absolute paths without ../",
@@ -180,6 +181,29 @@ export async function validateContract(input: ValidateContractInput) {
     const safePath = pathValidation.normalizedPath!;
     sourceDir = join(safePath, "..");
     originalFilePath = safePath; // Store for use in compilation
+
+    // SECURITY: Validate sourceDir against blocked paths
+    // This prevents malicious includes from accessing system directories
+    const sourceDirValidation = validateFilePath(
+      join(sourceDir, "dummy.compact")
+    );
+    if (
+      !sourceDirValidation.valid &&
+      sourceDirValidation.error?.includes("system directories")
+    ) {
+      return {
+        success: false,
+        errorType: "security_error",
+        error: "Invalid source directory",
+        message: "❌ Cannot access files in system directories",
+        userAction: {
+          problem:
+            "The contract's parent directory is a restricted system location",
+          solution: "Move your contract files to a user project directory",
+          isUserFault: true,
+        },
+      };
+    }
 
     // Read code from file
     try {
@@ -427,9 +451,10 @@ export ledger counter: Counter;
           if (candidatePath.toLowerCase().includes("system32")) {
             continue;
           }
-          const { stdout: versionOutput } = await execAsync(
-            `"${candidatePath}" compile --version`
-          );
+          const { stdout: versionOutput } = await execFileAsync(candidatePath, [
+            "compile",
+            "--version",
+          ]);
           compactPath = candidatePath;
           compilerVersion = versionOutput.trim();
           found = true;
@@ -445,10 +470,10 @@ export ledger counter: Counter;
       // Unix: use which to find compact
       const { stdout: whichOutput } = await execAsync("which compact");
       compactPath = whichOutput.trim().split(/\r?\n/)[0];
-      const { stdout: versionOutput } = await execFileAsync(
-        compactPath,
-        ["compile", "--version"]
-      );
+      const { stdout: versionOutput } = await execFileAsync(compactPath, [
+        "compile",
+        "--version",
+      ]);
       compilerVersion = versionOutput.trim();
     }
   } catch {
@@ -1060,12 +1085,14 @@ export async function extractContractStructure(
     line: number;
   }> = [];
 
-  // Helper to split parameters handling nested angle brackets (e.g., Map<A, B>)
+  // Helper to split parameters handling nested angle brackets, square brackets, and parentheses
+  // (e.g., Map<A, B>, [Field, Boolean], (x: Field) => Boolean)
   const splitParams = (paramsStr: string): string[] => {
     const result: string[] = [];
     let current = "";
     let angleDepth = 0;
     let squareDepth = 0;
+    let parenDepth = 0;
 
     for (let i = 0; i < paramsStr.length; i++) {
       const ch = paramsStr[i];
@@ -1073,8 +1100,15 @@ export async function extractContractStructure(
       else if (ch === ">") angleDepth = Math.max(0, angleDepth - 1);
       else if (ch === "[") squareDepth++;
       else if (ch === "]") squareDepth = Math.max(0, squareDepth - 1);
+      else if (ch === "(") parenDepth++;
+      else if (ch === ")") parenDepth = Math.max(0, parenDepth - 1);
 
-      if (ch === "," && angleDepth === 0 && squareDepth === 0) {
+      if (
+        ch === "," &&
+        angleDepth === 0 &&
+        squareDepth === 0 &&
+        parenDepth === 0
+      ) {
         if (current.trim()) result.push(current.trim());
         current = "";
       } else {
@@ -1086,8 +1120,8 @@ export async function extractContractStructure(
   };
 
   // Use a more permissive pattern for return types to handle complex nested types
-  const circuitPattern =
-    /(?:(export)\s+)?circuit\s+(\w+)\s*\(([^)]*)\)\s*:\s*([^{\n;]+)/g;
+  // Note: [^)]* doesn't work for nested parens, so we use a manual extraction approach
+  const circuitStartPattern = /(?:(export)\s+)?circuit\s+(\w+)\s*\(/g;
   const lines = code.split("\n");
 
   // Precompute a mapping from character index to 1-based line number to avoid
@@ -1104,15 +1138,33 @@ export async function extractContractStructure(
   }
 
   let circuitMatch;
-  while ((circuitMatch = circuitPattern.exec(code)) !== null) {
+  while ((circuitMatch = circuitStartPattern.exec(code)) !== null) {
     const lineNum = lineByIndex[circuitMatch.index];
-    const params = splitParams(circuitMatch[3]);
+    const isExport = circuitMatch[1] === "export";
+    const name = circuitMatch[2];
+
+    // Manually extract params by finding matching closing parenthesis
+    const startIdx = circuitMatch.index + circuitMatch[0].length;
+    let depth = 1;
+    let endIdx = startIdx;
+    while (endIdx < code.length && depth > 0) {
+      if (code[endIdx] === "(") depth++;
+      else if (code[endIdx] === ")") depth--;
+      endIdx++;
+    }
+    const paramsStr = code.substring(startIdx, endIdx - 1);
+    const params = splitParams(paramsStr);
+
+    // Extract return type after ): until { or newline or ;
+    const afterParams = code.substring(endIdx);
+    const returnTypeMatch = afterParams.match(/^\s*:\s*([^{\n;]+)/);
+    const returnType = returnTypeMatch ? returnTypeMatch[1].trim() : "[]";
 
     circuits.push({
-      name: circuitMatch[2],
+      name,
       params,
-      returnType: circuitMatch[4].trim(),
-      isExport: circuitMatch[1] === "export",
+      returnType,
+      isExport,
       line: lineNum,
     });
   }
@@ -1238,7 +1290,10 @@ export async function extractContractStructure(
       // Handle block comments
       if (ch === "/" && next === "*") {
         i += 2;
-        while (i < length && !(source[i] === "*" && i + 1 < length && source[i + 1] === "/")) {
+        while (
+          i < length &&
+          !(source[i] === "*" && i + 1 < length && source[i + 1] === "/")
+        ) {
           i++;
         }
         if (i < length) {
