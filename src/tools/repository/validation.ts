@@ -704,7 +704,7 @@ export ledger counter: Counter;
   } finally {
     // Cleanup temp files (cross-platform)
     try {
-      await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+      await rm(tempDir, { recursive: true, force: true });
     } catch {
       // Ignore cleanup errors
     }
@@ -1180,7 +1180,7 @@ export async function extractContractStructure(
 
   let witnessMatch;
   while ((witnessMatch = witnessPattern.exec(code)) !== null) {
-    const lineNum = code.substring(0, witnessMatch.index).split("\n").length;
+    const lineNum = lineByIndex[witnessMatch.index];
     witnesses.push({
       name: witnessMatch[2],
       type: witnessMatch[3].trim(),
@@ -1200,7 +1200,7 @@ export async function extractContractStructure(
 
   let ledgerMatch;
   while ((ledgerMatch = ledgerPattern.exec(code)) !== null) {
-    const lineNum = code.substring(0, ledgerMatch.index).split("\n").length;
+    const lineNum = lineByIndex[ledgerMatch.index];
     ledgerItems.push({
       name: ledgerMatch[2],
       type: ledgerMatch[3].trim(),
@@ -1219,7 +1219,7 @@ export async function extractContractStructure(
 
   let typeMatch;
   while ((typeMatch = typePattern.exec(code)) !== null) {
-    const lineNum = code.substring(0, typeMatch.index).split("\n").length;
+    const lineNum = lineByIndex[typeMatch.index];
     types.push({
       name: typeMatch[1],
       definition: typeMatch[2].trim(),
@@ -1328,7 +1328,7 @@ export async function extractContractStructure(
 
   let structMatch;
   while ((structMatch = structPattern.exec(code)) !== null) {
-    const lineNum = code.substring(0, structMatch.index).split("\n").length;
+    const lineNum = lineByIndex[structMatch.index];
     const openingBraceIndex = code.indexOf("{", structMatch.index);
     if (openingBraceIndex === -1) {
       continue;
@@ -1350,18 +1350,29 @@ export async function extractContractStructure(
     });
   }
 
-  // Extract enum definitions
+  // Extract enum definitions using balanced block extraction
+  // (handles nested braces in comments/strings)
   const enums: Array<{
     name: string;
     variants: string[];
     line: number;
   }> = [];
-  const enumPattern = /enum\s+(\w+)\s*\{([^}]+)\}/g;
+  const enumStartPattern = /enum\s+(\w+)\s*\{/g;
 
   let enumMatch;
-  while ((enumMatch = enumPattern.exec(code)) !== null) {
-    const lineNum = code.substring(0, enumMatch.index).split("\n").length;
-    const variants = enumMatch[2]
+  while ((enumMatch = enumStartPattern.exec(code)) !== null) {
+    const lineNum = lineByIndex[enumMatch.index];
+    const openingBraceIndex = code.indexOf("{", enumMatch.index);
+    if (openingBraceIndex === -1) {
+      continue;
+    }
+
+    const block = extractBalancedBlock(code, openingBraceIndex);
+    if (!block) {
+      continue;
+    }
+
+    const variants = block.body
       .split(",")
       .map((v) => v.trim())
       .filter((v) => v);

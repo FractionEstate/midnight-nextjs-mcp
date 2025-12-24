@@ -121,10 +121,14 @@ export const ValidateContractInputSchema = z
       .string()
       .optional()
       .default("contract.compact")
-      .describe("Optional filename for the contract (default: contract.compact)"),
+      .describe(
+        "Optional filename for the contract (default: contract.compact)"
+      ),
   })
   .refine(
-    (data) => data.code !== undefined || data.filePath !== undefined,
+    (data) =>
+      (data.code !== undefined && data.code.trim() !== "") ||
+      data.filePath !== undefined,
     {
       message: "Either 'code' or 'filePath' must be provided",
     }
@@ -145,12 +149,9 @@ export const ExtractContractStructureInputSchema = z
         "Path to a .compact file to analyze (alternative to providing code directly)"
       ),
   })
-  .refine(
-    (data) => data.code !== undefined || data.filePath !== undefined,
-    {
-      message: "Either 'code' or 'filePath' must be provided",
-    }
-  );
+  .refine((data) => data.code !== undefined || data.filePath !== undefined, {
+    message: "Either 'code' or 'filePath' must be provided",
+  });
 
 // Inferred types from schemas
 export type GetFileInput = z.infer<typeof GetFileInputSchema>;
