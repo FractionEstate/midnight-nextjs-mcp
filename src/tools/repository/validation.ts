@@ -1161,12 +1161,110 @@ export async function extractContractStructure(
     fields: string[];
     line: number;
   }> = [];
-  const structPattern = /struct\s+(\w+)\s*\{([^}]+)\}/g;
+
+  /**
+   * Extract the contents of a balanced brace block starting at `startIndex`,
+   * handling nested braces and skipping over comments and string literals.
+   */
+  function extractBalancedBlock(
+    source: string,
+    startIndex: number
+  ): { body: string; endIndex: number } | null {
+    let depth = 0;
+    const length = source.length;
+    let i = startIndex;
+
+    if (source[i] !== "{") {
+      return null;
+    }
+
+    depth = 1;
+    i++;
+    const bodyStart = i;
+
+    while (i < length && depth > 0) {
+      const ch = source[i];
+      const next = i + 1 < length ? source[i + 1] : "";
+
+      // Handle string literals and template literals
+      if (ch === '"' || ch === "'" || ch === "`") {
+        const quote = ch;
+        i++;
+        while (i < length) {
+          const c = source[i];
+          if (c === "\\" && i + 1 < length) {
+            // Skip escaped character
+            i += 2;
+            continue;
+          }
+          if (c === quote) {
+            i++;
+            break;
+          }
+          i++;
+        }
+        continue;
+      }
+
+      // Handle line comments
+      if (ch === "/" && next === "/") {
+        i += 2;
+        while (i < length && source[i] !== "\n") {
+          i++;
+        }
+        continue;
+      }
+
+      // Handle block comments
+      if (ch === "/" && next === "*") {
+        i += 2;
+        while (i < length && !(source[i] === "*" && i + 1 < length && source[i + 1] === "/")) {
+          i++;
+        }
+        if (i < length) {
+          i += 2; // Skip closing */
+        }
+        continue;
+      }
+
+      if (ch === "{") {
+        depth++;
+        i++;
+        continue;
+      }
+
+      if (ch === "}") {
+        depth--;
+        i++;
+        if (depth === 0) {
+          const body = source.slice(bodyStart, i - 1);
+          return { body, endIndex: i - 1 };
+        }
+        continue;
+      }
+
+      i++;
+    }
+
+    return null;
+  }
+
+  const structPattern = /struct\s+(\w+)\s*\{/g;
 
   let structMatch;
   while ((structMatch = structPattern.exec(code)) !== null) {
     const lineNum = code.substring(0, structMatch.index).split("\n").length;
-    const fields = structMatch[2]
+    const openingBraceIndex = code.indexOf("{", structMatch.index);
+    if (openingBraceIndex === -1) {
+      continue;
+    }
+
+    const block = extractBalancedBlock(code, openingBraceIndex);
+    if (!block) {
+      continue;
+    }
+
+    const fields = block.body
       .split(",")
       .map((f) => f.trim())
       .filter((f) => f);
