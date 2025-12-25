@@ -13,7 +13,7 @@ import { searchCache, fileCache, metadataCache } from "../utils/cache.js";
 import type { ExtendedToolDefinition, OutputSchema } from "../types/index.js";
 
 // Current version - should match package.json
-const CURRENT_VERSION = "0.1.25";
+const CURRENT_VERSION = "0.1.26";
 
 // Schema definitions
 export const HealthCheckInputSchema = z.object({

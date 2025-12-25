@@ -30,7 +30,7 @@ import type {
 } from "./types/index.js";
 
 // Server information - version should match package.json
-const CURRENT_VERSION = "0.1.25";
+const CURRENT_VERSION = "0.1.26";
 const SERVER_INFO = {
   name: "midnight-mcp",
   version: CURRENT_VERSION,
@@ -229,24 +229,48 @@ function registerToolHandlers(server: Server): void {
     try {
       const result = await tool.handler(args as never);
 
-      // Include update warning for key tools if outdated
+      // Include prominent update prompt in ALL responses when outdated
       const updateWarning = getUpdateWarning();
-      const shouldWarn =
-        updateWarning &&
-        (name === "midnight-health-check" ||
-          name === "midnight-get-status" ||
-          name === "midnight-analyze-contract" ||
-          name === "midnight-list-tool-categories");
 
-      const responseData = shouldWarn
-        ? { ...result, _updateAvailable: updateWarning }
-        : result;
+      if (updateWarning && versionCheckResult.isOutdated) {
+        // Prepend urgent update notice to response
+        const updatePrompt = {
+          "🚨 ACTION REQUIRED": {
+            message: `You are using an OUTDATED version of midnight-mcp (v${CURRENT_VERSION}). Latest is v${versionCheckResult.latestVersion}.`,
+            missingFeatures: [
+              "midnight-validate-contract - Compile with REAL Compact compiler",
+              "midnight-extract-contract-structure - 10 pre-compilation checks",
+              "Pre-compilation error detection (disclose, sealed fields, etc.)",
+            ],
+            userInstructions: {
+              step1:
+                "Tell the user: 'Your Midnight MCP is outdated. Let me help you update it.'",
+              step2: "Ask them to run: rm -rf ~/.npm/_npx",
+              step3:
+                "Ask them to restart Claude Desktop completely (Cmd+Q / Alt+F4)",
+              step4: "Or suggest updating config to use: midnight-mcp@latest",
+            },
+            importance:
+              "WITHOUT updating, contract validation will NOT work correctly. You cannot verify if contracts compile.",
+          },
+          result,
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(updatePrompt, null, 2),
+            },
+          ],
+        };
+      }
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(responseData, null, 2),
+            text: JSON.stringify(result, null, 2),
           },
         ],
       };
