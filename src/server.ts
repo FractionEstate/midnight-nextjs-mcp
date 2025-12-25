@@ -30,11 +30,67 @@ import type {
 } from "./types/index.js";
 
 // Server information - version should match package.json
+const CURRENT_VERSION = "0.1.25";
 const SERVER_INFO = {
   name: "midnight-mcp",
-  version: "0.1.4",
+  version: CURRENT_VERSION,
   description: "MCP Server for Midnight Blockchain Development",
 };
+
+// Version check state
+let versionCheckResult: {
+  isOutdated: boolean;
+  latestVersion: string;
+  updateMessage: string | null;
+} = {
+  isOutdated: false,
+  latestVersion: CURRENT_VERSION,
+  updateMessage: null,
+};
+
+/**
+ * Check for updates against npm registry (runs at startup)
+ */
+async function checkForUpdates(): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+    const response = await fetch(
+      "https://registry.npmjs.org/midnight-mcp/latest",
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+
+    if (!response.ok) return;
+
+    const data = (await response.json()) as { version: string };
+    const latestVersion = data.version;
+
+    if (latestVersion !== CURRENT_VERSION) {
+      versionCheckResult = {
+        isOutdated: true,
+        latestVersion,
+        updateMessage:
+          `⚠️ UPDATE AVAILABLE: v${latestVersion} (you have v${CURRENT_VERSION}). ` +
+          `Run: rm -rf ~/.npm/_npx && restart Claude Desktop. ` +
+          `Or update config to use: "midnight-mcp@latest"`,
+      };
+      logger.warn(
+        `Outdated version detected: v${CURRENT_VERSION} -> v${latestVersion}`
+      );
+    }
+  } catch {
+    // Silently ignore version check failures (offline, timeout, etc.)
+  }
+}
+
+/**
+ * Get update warning if outdated (to include in responses)
+ */
+export function getUpdateWarning(): string | null {
+  return versionCheckResult.updateMessage;
+}
 
 // Resource subscriptions tracking
 const resourceSubscriptions = new Set<string>();
@@ -172,11 +228,25 @@ function registerToolHandlers(server: Server): void {
 
     try {
       const result = await tool.handler(args as never);
+
+      // Include update warning for key tools if outdated
+      const updateWarning = getUpdateWarning();
+      const shouldWarn =
+        updateWarning &&
+        (name === "midnight-health-check" ||
+          name === "midnight-get-status" ||
+          name === "midnight-analyze-contract" ||
+          name === "midnight-list-tool-categories");
+
+      const responseData = shouldWarn
+        ? { ...result, _updateAvailable: updateWarning }
+        : result;
+
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(result, null, 2),
+            text: JSON.stringify(responseData, null, 2),
           },
         ],
       };
@@ -468,6 +538,11 @@ function setupSampling(server: Server): void {
 export async function initializeServer(): Promise<Server> {
   logger.info("Initializing Midnight MCP Server...");
 
+  // Check for updates in background (non-blocking)
+  checkForUpdates().catch(() => {
+    // Ignore errors - version check is best-effort
+  });
+
   // Initialize vector store
   try {
     await vectorStore.initialize();
@@ -480,7 +555,7 @@ export async function initializeServer(): Promise<Server> {
 
   // Create and return server
   const server = createServer();
-  logger.info("Server created successfully");
+  logger.info(`Server v${CURRENT_VERSION} created successfully`);
 
   return server;
 }
