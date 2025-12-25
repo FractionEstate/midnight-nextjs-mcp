@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.27] - 2025-12-25
+
+### Added
+
+- **2 New Pre-compilation Checks** based on real-world testing:
+  - `invalid_if_expression`: Detects `if` statements used in assignment context (should use ternary `? :`)
+  - `invalid_void_type`: Detects `Void` return type (doesn't exist - should use `[]` empty tuple)
+- Total pre-compilation checks: 12 issue types
+
 ## [0.1.26] - 2025-12-25
 
 ### Added

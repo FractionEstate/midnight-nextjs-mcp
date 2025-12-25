@@ -1740,6 +1740,35 @@ export async function extractContractStructure(
     }
   }
 
+  // 11. Detect "if" expression used in assignment context (should use ternary)
+  // Pattern: const x = if (...) { ... } else { ... }
+  const ifAssignmentPattern = /(?:const|let)\s+\w+\s*=\s*if\s*\(/g;
+  let ifAssignMatch;
+  while ((ifAssignMatch = ifAssignmentPattern.exec(code)) !== null) {
+    const lineNum = lineByIndex[ifAssignMatch.index] || 1;
+    potentialIssues.push({
+      type: "invalid_if_expression",
+      line: lineNum,
+      message: `'if' cannot be used as an expression in assignments`,
+      suggestion: `Use ternary operator instead: 'const x = condition ? valueIfTrue : valueIfFalse;'`,
+      severity: "error",
+    });
+  }
+
+  // 12. Detect "Void" return type (should use [] empty tuple)
+  const voidReturnPattern = /circuit\s+\w+\s*\([^)]*\)\s*:\s*Void\b/g;
+  let voidMatch;
+  while ((voidMatch = voidReturnPattern.exec(code)) !== null) {
+    const lineNum = lineByIndex[voidMatch.index] || 1;
+    potentialIssues.push({
+      type: "invalid_void_type",
+      line: lineNum,
+      message: `'Void' is not a valid type in Compact`,
+      suggestion: `Use empty tuple '[]' for circuits with no return value: 'circuit name(): []'`,
+      severity: "error",
+    });
+  }
+
   const summary = [];
   if (circuits.length > 0) {
     summary.push(`${circuits.length} circuit(s)`);

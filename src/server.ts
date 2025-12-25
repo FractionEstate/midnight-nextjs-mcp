@@ -30,7 +30,7 @@ import type {
 } from "./types/index.js";
 
 // Server information - version should match package.json
-const CURRENT_VERSION = "0.1.26";
+const CURRENT_VERSION = "0.1.27";
 const SERVER_INFO = {
   name: "midnight-mcp",
   version: CURRENT_VERSION,

@@ -716,4 +716,70 @@ constructor(name: Bytes<32>, symbol: Bytes<8>) {
     );
     expect(disclosure).toBeUndefined();
   });
+
+  it("should detect if expression used in assignment", async () => {
+    const code = `pragma language_version >= 0.16;
+
+ledger balances: Map<Bytes<32>, Uint<128>>;
+
+export circuit getBalance(addr: Bytes<32>): Uint<128> {
+  const balance = if (balances.member(addr)) {
+    balances.lookup(addr)
+  } else {
+    0 as Uint<128>
+  };
+  return balance;
+}
+`;
+    const result = await extractContractStructure({ code });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.potentialIssues).toBeDefined();
+    expect(
+      result.potentialIssues!.some((i) => i.type === "invalid_if_expression")
+    ).toBe(true);
+    const ifIssue = result.potentialIssues!.find(
+      (i) => i.type === "invalid_if_expression"
+    );
+    expect(ifIssue?.suggestion).toContain("ternary");
+  });
+
+  it("should detect Void return type", async () => {
+    const code = `pragma language_version >= 0.16;
+
+export circuit doSomething(): Void {
+  // some code
+}
+`;
+    const result = await extractContractStructure({ code });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.potentialIssues).toBeDefined();
+    expect(
+      result.potentialIssues!.some((i) => i.type === "invalid_void_type")
+    ).toBe(true);
+    const voidIssue = result.potentialIssues!.find(
+      (i) => i.type === "invalid_void_type"
+    );
+    expect(voidIssue?.suggestion).toContain("[]");
+  });
+
+  it("should not flag valid empty tuple return type", async () => {
+    const code = `pragma language_version >= 0.16;
+
+export circuit doSomething(): [] {
+  // some code
+}
+`;
+    const result = await extractContractStructure({ code });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    const voidIssue = result.potentialIssues?.find(
+      (i) => i.type === "invalid_void_type"
+    );
+    expect(voidIssue).toBeUndefined();
+  });
 });
