@@ -71,18 +71,27 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 **No API keys required.** Restart your editor after adding the config.
 
-### Automatic Updates
+### Updating to Latest Version
 
-Using `midnight-mcp@latest` ensures you always get the newest version.
+Using `midnight-mcp@latest` in your config ensures you get updates automatically on restart.
 
-**If you have an older version:** The AI agent will detect it and offer to update your config automatically—no manual steps required! Just approve the config edit and restart your editor.
-
-Or manually update your config:
+**Already using an older version without `@latest`?** Update your config manually:
 
 ```diff
 - "args": ["-y", "midnight-mcp"]
 + "args": ["-y", "midnight-mcp@latest"]
 ```
+
+**Then clear npm cache and restart:**
+
+```bash
+# Clear npx cache (required to fetch new version)
+rm -rf ~/.npm/_npx
+
+# Restart your editor (Cmd+Q on Mac, then reopen)
+```
+
+> **Note:** AI agents cannot auto-update your config because they run in a sandboxed environment without access to your local filesystem.
 
 ---
 
@@ -98,7 +107,7 @@ Or manually update your config:
 | **Versioning**    | `get-version-info`, `check-breaking-changes`, `get-migration-guide`, `get-file-at-version`, `compare-syntax`, `get-latest-syntax` | Version tracking and migration                   |
 | **AI Generation** | `generate-contract`, `review-contract`, `document-contract`                                                                       | AI-powered code generation _(requires sampling)_ |
 | **Compound**      | `upgrade-check`, `get-repo-context`                                                                                               | Multi-step operations _(saves 50-70% tokens)_    |
-| **Health**        | `health-check`, `get-status`, `check-version`, `auto-update-config`                                                               | Server status, version checking, auto-update     |
+| **Health**        | `health-check`, `get-status`, `check-version`                                                                                     | Server status and version checking               |
 | **Discovery**     | `list-tool-categories`, `list-category-tools`                                                                                     | Explore available tools                          |
 
 All tools are prefixed with `midnight-` (e.g., `midnight-search-compact`).

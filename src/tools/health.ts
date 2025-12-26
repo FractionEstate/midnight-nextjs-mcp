@@ -383,9 +383,9 @@ export const healthTools: ExtendedToolDefinition[] = [
   {
     name: "midnight-auto-update-config",
     description:
-      "🔧 AUTO-UPDATE: Get config file paths so YOU (the AI agent) can automatically update the user's MCP config to use @latest. " +
-      "This tool returns the exact file paths and search/replace instructions. " +
-      "After calling this, use your file editing capabilities to update the config file automatically - NO USER ACTION REQUIRED except restart.",
+      "⚠️ DEPRECATED: Auto-update is NOT possible because AI agents run in sandboxed environments without access to local filesystems. " +
+      "Instead, tell users to manually update their config to use midnight-mcp@latest, then run: rm -rf ~/.npm/_npx && restart their editor. " +
+      "This tool only returns config file paths for reference.",
     inputSchema: {
       type: "object" as const,
       properties: {},
