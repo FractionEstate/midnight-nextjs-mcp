@@ -93,7 +93,7 @@ Or manually update your config:
 | Category          | Tools                                                                                                                             | Description                                      |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | **Search**        | `search-compact`, `search-typescript`, `search-docs`                                                                              | Semantic search across Midnight codebase         |
-| **Analysis**      | `analyze-contract`, `explain-circuit`, `extract-contract-structure`                                                               | Static analysis and pattern detection            |
+| **Analysis**      | `analyze-contract`, `explain-circuit`, `extract-contract-structure`                                                               | Static analysis with 15+ checks (P0-P2 severity) |
 | **Repository**    | `get-file`, `list-examples`, `get-latest-updates`                                                                                 | Access files and examples                        |
 | **Versioning**    | `get-version-info`, `check-breaking-changes`, `get-migration-guide`, `get-file-at-version`, `compare-syntax`, `get-latest-syntax` | Version tracking and migration                   |
 | **AI Generation** | `generate-contract`, `review-contract`, `document-contract`                                                                       | AI-powered code generation _(requires sampling)_ |
@@ -119,12 +119,25 @@ All tools are prefixed with `midnight-` (e.g., `midnight-search-compact`).
 
 Quick references available offline:
 
-- Compact syntax guide
+- Compact syntax guide (v0.16-0.18)
 - SDK API reference
 - OpenZeppelin contracts
 - Tokenomics overview
 - Wallet integration
 - Common errors & solutions
+
+### Static Analysis
+
+`extract-contract-structure` catches common mistakes before compilation:
+
+| Check                     | Severity | Description                                             |
+| ------------------------- | -------- | ------------------------------------------------------- |
+| `deprecated_ledger_block` | P0       | Catches `ledger { }` → use `export ledger field: Type;` |
+| `invalid_void_type`       | P0       | Catches `Void` → use `[]` (empty tuple)                 |
+| `invalid_pragma_format`   | P0       | Catches old pragma → use `>= 0.16 && <= 0.18`           |
+| `unexported_enum`         | P1       | Enums need `export` for TypeScript access               |
+| `module_level_const`      | P0       | Use `pure circuit` instead                              |
+| + 10 more checks          | P1-P2    | Overflow, division, assertions, etc.                    |
 
 ### 5 Prompts
 
