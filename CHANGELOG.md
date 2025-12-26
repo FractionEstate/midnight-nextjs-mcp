@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.30] - 2025-12-25
+
+### Added
+
+- **MCP Logging Capability**: Server now exposes logging to clients
+  - Clients can set log level via `logging/setLevel` request
+  - Log messages are sent as `notifications/message` to connected clients
+  - Supports all MCP log levels: debug, info, notice, warning, error, critical, alert, emergency
+  - Great for debugging and monitoring server activity
+
+- **MCP Completions Capability**: Autocomplete for prompt arguments
+  - Suggests contract types: token, voting, credential, auction, escrow
+  - Suggests privacy levels: full, partial, public
+  - Suggests complexity levels: beginner, intermediate, advanced
+  - Works with all 5 prompts
+
+- **Progress Notifications**: Real-time progress for compound tools
+  - `midnight-upgrade-check` shows: "Fetching version info..." → "Checking breaking changes..." → "Analysis complete"
+  - `midnight-get-repo-context` shows: "Fetching version info..." → "Loading syntax reference..." → "Context ready"
+
+- **Structured Content**: Tool responses now include `structuredContent` field
+  - Machine-readable JSON alongside text content
+  - Clients can use structured data directly without JSON.parse()
+
 ## [0.1.29] - 2025-12-25
 
 ### Changed

@@ -10,9 +10,16 @@ import {
   ListResourceTemplatesRequestSchema,
   SubscribeRequestSchema,
   UnsubscribeRequestSchema,
+  SetLevelRequestSchema,
+  LoggingLevel,
+  CompleteRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import { logger, formatErrorResponse } from "./utils/index.js";
+import {
+  logger,
+  formatErrorResponse,
+  setMCPLogCallback,
+} from "./utils/index.js";
 import { vectorStore } from "./db/index.js";
 import { allTools } from "./tools/index.js";
 import {
@@ -30,7 +37,7 @@ import type {
 } from "./types/index.js";
 
 // Server information - version should match package.json
-const CURRENT_VERSION = "0.1.29";
+const CURRENT_VERSION = "0.1.30";
 const SERVER_INFO = {
   name: "midnight-mcp",
   version: CURRENT_VERSION,
@@ -142,6 +149,79 @@ const resourceTemplates: ResourceTemplate[] = [
 /**
  * Create and configure the MCP server
  */
+// Current MCP logging level (controlled by client)
+let mcpLogLevel: LoggingLevel = "info";
+
+// Server instance for sending notifications
+let serverInstance: Server | null = null;
+
+/**
+ * Send a log message to the MCP client
+ * This allows clients to see server logs for debugging
+ */
+export function sendLogToClient(
+  level: LoggingLevel,
+  loggerName: string,
+  data: unknown
+): void {
+  if (!serverInstance) return;
+
+  // Map levels to numeric values for comparison
+  const levelValues: Record<LoggingLevel, number> = {
+    debug: 0,
+    info: 1,
+    notice: 2,
+    warning: 3,
+    error: 4,
+    critical: 5,
+    alert: 6,
+    emergency: 7,
+  };
+
+  // Only send if level meets threshold
+  if (levelValues[level] < levelValues[mcpLogLevel]) return;
+
+  try {
+    serverInstance.notification({
+      method: "notifications/message",
+      params: {
+        level,
+        logger: loggerName,
+        data,
+      },
+    });
+  } catch {
+    // Ignore notification errors
+  }
+}
+
+/**
+ * Send a progress notification to the MCP client
+ * Used for long-running operations like compound tools
+ */
+export function sendProgressNotification(
+  progressToken: string | number,
+  progress: number,
+  total?: number,
+  message?: string
+): void {
+  if (!serverInstance) return;
+
+  try {
+    serverInstance.notification({
+      method: "notifications/progress",
+      params: {
+        progressToken,
+        progress,
+        ...(total !== undefined && { total }),
+        ...(message && { message }),
+      },
+    });
+  } catch {
+    // Ignore notification errors
+  }
+}
+
 export function createServer(): Server {
   const server = new Server(SERVER_INFO, {
     capabilities: {
@@ -155,7 +235,17 @@ export function createServer(): Server {
       prompts: {
         listChanged: true,
       },
+      logging: {},
+      completions: {},
     },
+  });
+
+  // Store server instance for logging notifications
+  serverInstance = server;
+
+  // Wire up MCP logging - send logger output to client
+  setMCPLogCallback((level, loggerName, data) => {
+    sendLogToClient(level as LoggingLevel, loggerName, data);
   });
 
   // Register tool handlers
@@ -170,10 +260,127 @@ export function createServer(): Server {
   // Register subscription handlers
   registerSubscriptionHandlers(server);
 
+  // Register logging handler
+  registerLoggingHandler(server);
+
+  // Register completions handler
+  registerCompletionsHandler(server);
+
   // Setup sampling callback if available
   setupSampling(server);
 
   return server;
+}
+
+/**
+ * Register logging handler for MCP logging capability
+ */
+function registerLoggingHandler(server: Server): void {
+  server.setRequestHandler(SetLevelRequestSchema, async (request) => {
+    const { level } = request.params;
+    mcpLogLevel = level;
+    logger.info(`MCP log level set to: ${level}`);
+    sendLogToClient("info", "midnight-mcp", {
+      message: `Log level changed to ${level}`,
+    });
+    return {};
+  });
+}
+
+// Completion suggestions for prompt arguments
+const COMPLETION_VALUES: Record<string, Record<string, string[]>> = {
+  "midnight:create-contract": {
+    contractType: [
+      "token",
+      "voting",
+      "credential",
+      "auction",
+      "escrow",
+      "custom",
+    ],
+    privacyLevel: ["full", "partial", "public"],
+    complexity: ["beginner", "intermediate", "advanced"],
+  },
+  "midnight:review-contract": {
+    focusAreas: [
+      "security",
+      "performance",
+      "privacy",
+      "readability",
+      "gas-optimization",
+    ],
+  },
+  "midnight:explain-concept": {
+    concept: [
+      "zk-proofs",
+      "circuits",
+      "witnesses",
+      "ledger",
+      "state-management",
+      "privacy-model",
+      "token-transfers",
+      "merkle-trees",
+    ],
+    level: ["beginner", "intermediate", "advanced"],
+  },
+  "midnight:compare-approaches": {
+    approaches: [
+      "token-standards",
+      "state-management",
+      "privacy-patterns",
+      "circuit-design",
+    ],
+  },
+  "midnight:debug-contract": {
+    errorType: [
+      "compilation",
+      "runtime",
+      "logic",
+      "privacy-leak",
+      "state-corruption",
+    ],
+  },
+};
+
+/**
+ * Register completions handler for argument autocompletion
+ */
+function registerCompletionsHandler(server: Server): void {
+  server.setRequestHandler(CompleteRequestSchema, async (request) => {
+    const { ref, argument } = request.params;
+
+    if (ref.type !== "ref/prompt") {
+      return { completion: { values: [], hasMore: false } };
+    }
+
+    const promptName = ref.name;
+    const argName = argument.name;
+    const currentValue = argument.value?.toLowerCase() || "";
+
+    // Get completion values for this prompt/argument
+    const promptCompletions = COMPLETION_VALUES[promptName];
+    if (!promptCompletions) {
+      return { completion: { values: [], hasMore: false } };
+    }
+
+    const argValues = promptCompletions[argName];
+    if (!argValues) {
+      return { completion: { values: [], hasMore: false } };
+    }
+
+    // Filter by current input
+    const filtered = argValues.filter((v) =>
+      v.toLowerCase().includes(currentValue)
+    );
+
+    return {
+      completion: {
+        values: filtered.slice(0, 20),
+        total: filtered.length,
+        hasMore: filtered.length > 20,
+      },
+    };
+  });
 }
 
 /**
@@ -273,6 +480,9 @@ function registerToolHandlers(server: Server): void {
             text: JSON.stringify(result, null, 2),
           },
         ],
+        // Include structured content for machine-readable responses
+        // This allows clients to parse results without JSON.parse()
+        structuredContent: result,
       };
     } catch (error) {
       logger.error(`Tool error: ${name}`, { error: String(error) });
