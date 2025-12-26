@@ -73,24 +73,22 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ### Automatic Updates
 
-Using `midnight-mcp@latest` ensures you always get the newest version. If you have an older config without `@latest`, update it:
+Using `midnight-mcp@latest` ensures you always get the newest version.
+
+**If you have an older version:** The AI agent will detect it and offer to update your config automatically—no manual steps required! Just approve the config edit and restart your editor.
+
+Or manually update your config:
 
 ```diff
 - "args": ["-y", "midnight-mcp"]
 + "args": ["-y", "midnight-mcp@latest"]
 ```
 
-Or clear the npx cache to force an update:
-
-```bash
-npx clear-npx-cache
-```
-
 ---
 
 ## What's Included
 
-### 25 Tools
+### 26 Tools
 
 | Category          | Tools                                                                                                                             | Description                                      |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
@@ -100,7 +98,7 @@ npx clear-npx-cache
 | **Versioning**    | `get-version-info`, `check-breaking-changes`, `get-migration-guide`, `get-file-at-version`, `compare-syntax`, `get-latest-syntax` | Version tracking and migration                   |
 | **AI Generation** | `generate-contract`, `review-contract`, `document-contract`                                                                       | AI-powered code generation _(requires sampling)_ |
 | **Compound**      | `upgrade-check`, `get-repo-context`                                                                                               | Multi-step operations _(saves 50-70% tokens)_    |
-| **Health**        | `health-check`, `get-status`, `check-version`                                                                                     | Server status and version checking               |
+| **Health**        | `health-check`, `get-status`, `check-version`, `auto-update-config`                                                               | Server status, version checking, auto-update     |
 | **Discovery**     | `list-tool-categories`, `list-category-tools`                                                                                     | Explore available tools                          |
 
 All tools are prefixed with `midnight-` (e.g., `midnight-search-compact`).
@@ -109,7 +107,7 @@ All tools are prefixed with `midnight-` (e.g., `midnight-search-compact`).
 
 | Capability      | Feature                                         |
 | --------------- | ----------------------------------------------- |
-| **Tools**       | 25 tools with `listChanged` notifications       |
+| **Tools**       | 26 tools with `listChanged` notifications       |
 | **Resources**   | 9 embedded resources with subscription support  |
 | **Prompts**     | 5 workflow prompts                              |
 | **Logging**     | Client-controllable log level                   |
