@@ -134,6 +134,16 @@ export enum GameState { waiting, playing, finished }
 export enum Choice { rock, paper, scissors }
 \`\`\`
 
+**Enum Access Syntax** - use DOT notation (not Rust-style ::):
+\`\`\`compact
+// CORRECT - dot notation
+if (choice == Choice.rock) { ... }
+game_state = GameState.waiting;
+
+// WRONG - Rust-style double colon
+if (choice == Choice::rock) { ... }  // ❌ Parse error: found ":" looking for ")"
+\`\`\`
+
 **Structs**:
 \`\`\`compact
 export struct PlayerConfig {

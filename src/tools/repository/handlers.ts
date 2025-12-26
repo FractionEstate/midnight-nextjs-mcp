@@ -566,6 +566,11 @@ export circuit increment(): [] {
             correct: "// Use witness: witness get_value(key): Type;",
             error: "member access requires struct type",
           },
+          {
+            wrong: "Choice::rock (Rust-style)",
+            correct: "Choice.rock (dot notation)",
+            error: 'parse error: found ":" looking for ")"',
+          },
         ],
 
         syntaxReference: compactReference,

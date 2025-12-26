@@ -374,4 +374,11 @@ witness lookup_value(key: Bytes<32>): Field;`,
 2. Range check fails (use bounded Uint)
 3. Logic error in circuit`,
   },
+  {
+    error: 'parse error: found ":" looking for ")"',
+    cause: "Using Rust-style :: for enum variant access",
+    fix: `Use dot notation for enum variants:
+WRONG:  Choice::rock, GameState::waiting
+CORRECT: Choice.rock, GameState.waiting`,
+  },
 ];
