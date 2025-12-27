@@ -13,9 +13,12 @@ import {
 } from "../utils/index.js";
 import { searchCache, fileCache, metadataCache } from "../utils/cache.js";
 import type { ExtendedToolDefinition, OutputSchema } from "../types/index.js";
+import { createRequire } from "module";
 
-// Current version - should match package.json
-const CURRENT_VERSION = "0.1.30";
+// Read version from package.json (single source of truth)
+const require = createRequire(import.meta.url);
+const packageJson = require("../../package.json");
+const CURRENT_VERSION: string = packageJson.version;
 
 // Schema definitions
 export const HealthCheckInputSchema = z.object({

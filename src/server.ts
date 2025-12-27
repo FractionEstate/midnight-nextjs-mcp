@@ -36,9 +36,12 @@ import type {
   SamplingRequest,
   SamplingResponse,
 } from "./types/index.js";
+import { createRequire } from "module";
 
-// Server information - version should match package.json
-const CURRENT_VERSION = "0.1.33";
+// Read version from package.json (single source of truth)
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
+const CURRENT_VERSION: string = packageJson.version;
 const SERVER_INFO = {
   name: "midnight-mcp",
   version: CURRENT_VERSION,
