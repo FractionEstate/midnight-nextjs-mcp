@@ -5,6 +5,86 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.40] - 2025-12-27
+
+### Fixed
+
+- **CRITICAL: Map/Set operations documentation was WRONG**
+  - `Map.lookup()` IS available in circuits (previously documented as unavailable)
+  - `Map.member()` IS available in circuits (previously documented as unavailable)
+  - `Set.member()` IS available in circuits (previously documented as unavailable)
+  - Verified against OpenZeppelin contracts and real compiler behavior
+
+### Added
+
+- **New compiler error patterns** with fixes:
+  - `cannot cast from type Uint<64> to type Bytes<32>` → Use `(amount as Field) as Bytes<32>`
+  - `expected type Uint<64> but received Uint<0..N>` → Cast arithmetic: `(a + b) as Uint<64>`
+  - `potential witness-value disclosure must be declared` → Disclose params: `const d = disclose(param)`
+
+- **Type casting rules** in `TYPE_COMPATIBILITY`:
+  - `Uint<64> → Bytes<32>`: Must go through Field first
+  - `Uint<N> → Field`: Direct cast allowed
+  - Arithmetic results need explicit cast back to target type
+
+- **Arithmetic result type documentation**:
+  - `Uint<64> + Uint<64>` produces `Uint<0..36893488147419103230>`
+  - Must cast back: `(a + b) as Uint<64>`
+
+### Changed
+
+- **Tool description updated** - `midnight-get-latest-syntax` now shows:
+  - "🚨 CALL THIS BEFORE GENERATING ANY COMPACT CODE!"
+  - Lists Map.lookup/Set.member as available in circuits
+  - Emphasizes disclose() requirement for circuit params
+
+- **Prompts enhanced** with new compiler error patterns:
+  - `create-contract` prompt includes type casting rules
+  - `debug-contract` prompt includes new error→fix mappings
+
+### Removed
+
+- Duplicate anti-hallucination tools (getSampleContract, verifyCompactSyntax)
+  - Functionality already exists in `midnight-get-latest-syntax`
+
+## [0.1.39] - 2025-12-27
+
+### Added
+
+- **Tool call tracking** - Dashboard now tracks ALL MCP tool calls
+  - New API endpoint: `POST /v1/track/tool`
+  - Dashboard shows: Tool Calls metric, Tool Usage chart, Recent Tool Calls table
+  - Fire-and-forget tracking (doesn't slow down tool responses)
+
+## [0.1.38] - 2025-12-26
+
+### Changed
+
+- **Deprecated auto-update tool** - Clarified that AI cannot auto-update config
+  - AI runs in sandbox without filesystem access
+  - Updated all prompts to give manual update instructions
+  - Tool still exists but returns manual instructions
+
+## [0.1.37] - 2025-12-26
+
+### Fixed
+
+- **Witness syntax** - Witnesses are declarations only, no body allowed
+  - Wrong: `witness fn(): T { return ...; }`
+  - Correct: `witness fn(): T;`
+
+- **Pure circuit syntax** - Use "pure circuit" not "pure function"
+  - Wrong: `pure function helper(): T`
+  - Correct: `pure circuit helper(): T`
+
+## [0.1.36] - 2025-12-26
+
+### Fixed
+
+- **Enum dot notation** - Compact uses dot notation, not Rust-style ::
+  - Wrong: `Choice::rock`, `GameState::waiting`
+  - Correct: `Choice.rock`, `GameState.waiting`
+
 ## [0.1.35] - 2025-12-26
 
 ### Added
