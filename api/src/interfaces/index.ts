@@ -24,6 +24,14 @@ export interface QueryLog {
   language?: string;
 }
 
+export interface ToolCall {
+  tool: string;
+  timestamp: string;
+  success: boolean;
+  durationMs?: number;
+  version?: string;
+}
+
 export interface Metrics {
   totalQueries: number;
   queriesByEndpoint: Record<string, number>;
@@ -33,6 +41,10 @@ export interface Metrics {
   recentQueries: QueryLog[];
   documentsByRepo: Record<string, number>;
   lastUpdated: string;
+  // Tool tracking
+  totalToolCalls: number;
+  toolCallsByName: Record<string, number>;
+  recentToolCalls: ToolCall[];
 }
 
 // ============== Search Types ==============

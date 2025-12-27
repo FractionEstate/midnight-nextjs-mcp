@@ -5,6 +5,7 @@
 export {
   getMetrics,
   trackQuery,
+  trackToolCall,
   persistMetrics,
   loadMetrics,
   createDefaultMetrics,

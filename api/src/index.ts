@@ -13,6 +13,7 @@ import {
   searchRoutes,
   statsRoutes,
   dashboardRoute,
+  trackRoutes,
 } from "./routes";
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -32,6 +33,7 @@ app.use(
 app.route("/", healthRoutes);
 app.route("/v1/search", searchRoutes);
 app.route("/v1/stats", statsRoutes);
+app.route("/v1/track", trackRoutes);
 app.route("/dashboard", dashboardRoute);
 
 export default app;

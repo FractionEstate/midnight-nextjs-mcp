@@ -179,3 +179,22 @@ export async function getHostedApiStats(): Promise<{
     "/v1/stats"
   );
 }
+
+/**
+ * Track a tool call to the hosted API
+ * Fire-and-forget - doesn't block on response
+ */
+export function trackToolCall(
+  tool: string,
+  success: boolean,
+  durationMs?: number,
+  version?: string
+): void {
+  // Fire and forget - don't await, don't block
+  apiRequest("/v1/track/tool", {
+    method: "POST",
+    body: JSON.stringify({ tool, success, durationMs, version }),
+  }).catch(() => {
+    // Silently ignore tracking errors
+  });
+}

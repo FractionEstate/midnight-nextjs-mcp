@@ -58,6 +58,7 @@ export {
   searchHosted,
   checkHostedApiHealth,
   getHostedApiStats,
+  trackToolCall,
 } from "./hosted-api.js";
 export type {
   HostedSearchResult,

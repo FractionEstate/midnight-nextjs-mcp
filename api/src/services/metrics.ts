@@ -2,7 +2,7 @@
  * Metrics service for tracking query analytics
  */
 
-import type { Metrics, QueryLog } from "../interfaces";
+import type { Metrics, QueryLog, ToolCall } from "../interfaces";
 
 // Initialize default metrics
 export function createDefaultMetrics(): Metrics {
@@ -15,6 +15,10 @@ export function createDefaultMetrics(): Metrics {
     recentQueries: [],
     documentsByRepo: {},
     lastUpdated: new Date().toISOString(),
+    // Tool tracking
+    totalToolCalls: 0,
+    toolCallsByName: {},
+    recentToolCalls: [],
   };
 }
 
@@ -82,6 +86,38 @@ export function trackQuery(
   metrics.recentQueries.unshift(logEntry);
   if (metrics.recentQueries.length > 100) {
     metrics.recentQueries = metrics.recentQueries.slice(0, 100);
+  }
+
+  metrics.lastUpdated = new Date().toISOString();
+}
+
+/**
+ * Track a tool call from the MCP
+ */
+export function trackToolCall(
+  tool: string,
+  success: boolean,
+  durationMs?: number,
+  version?: string
+): void {
+  // Initialize if needed (for older metrics without tool tracking)
+  if (!metrics.totalToolCalls) metrics.totalToolCalls = 0;
+  if (!metrics.toolCallsByName) metrics.toolCallsByName = {};
+  if (!metrics.recentToolCalls) metrics.recentToolCalls = [];
+
+  metrics.totalToolCalls++;
+  metrics.toolCallsByName[tool] = (metrics.toolCallsByName[tool] || 0) + 1;
+
+  const logEntry: ToolCall = {
+    tool,
+    timestamp: new Date().toISOString(),
+    success,
+    durationMs,
+    version,
+  };
+  metrics.recentToolCalls.unshift(logEntry);
+  if (metrics.recentToolCalls.length > 100) {
+    metrics.recentToolCalls = metrics.recentToolCalls.slice(0, 100);
   }
 
   metrics.lastUpdated = new Date().toISOString();

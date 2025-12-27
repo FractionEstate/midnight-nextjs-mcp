@@ -2,7 +2,7 @@
  * Dashboard HTML template generator
  */
 
-import type { Metrics } from "../interfaces";
+import type { Metrics, ToolCall } from "../interfaces";
 
 /**
  * Generate the dashboard HTML page
@@ -151,51 +151,55 @@ function generateMetricsContent(
   metrics: Metrics,
   qualityScore: number
 ): string {
+  const totalToolCalls = metrics.totalToolCalls || 0;
+  const toolCallsByName = metrics.toolCallsByName || {};
+  const recentToolCalls = metrics.recentToolCalls || [];
+
   return `
     <div class="metrics">
       <div class="metric">
-        <div class="metric-value">${metrics.totalQueries.toLocaleString()}</div>
+        <div class="metric-value">${totalToolCalls.toLocaleString()}</div>
         <div class="metric-label has-tooltip">
-          Total Queries
+          Tool Calls
           <span class="info-icon">?</span>
-          <span class="tooltip">The total number of MCP tool calls made to this server. Each search, file fetch, or analysis counts as one query.</span>
+          <span class="tooltip">Total MCP tool invocations including search, analysis, code generation, and all other tools.</span>
         </div>
       </div>
       <div class="metric">
-        <div class="metric-value">${(metrics.avgRelevanceScore * 100).toFixed(1)}%</div>
+        <div class="metric-value">${metrics.totalQueries.toLocaleString()}</div>
         <div class="metric-label has-tooltip">
-          Avg Relevance
+          Search Queries
           <span class="info-icon">?</span>
-          <span class="tooltip">Average semantic similarity score between queries and returned results. Higher means search results better match what was asked. 70%+ is excellent, 50-70% is good, below 50% may indicate content gaps.</span>
+          <span class="tooltip">Semantic search queries through the hosted API (compact, typescript, docs).</span>
         </div>
       </div>
       <div class="metric">
         <div class="metric-value">${qualityScore}%</div>
         <div class="metric-label has-tooltip">
-          Quality Score
+          Search Quality
           <span class="info-icon">?</span>
-          <span class="tooltip">Composite metric combining relevance and result distribution. Calculated as: (High×100 + Medium×50) / Total. Indicates overall search effectiveness.</span>
+          <span class="tooltip">Composite metric: (High×100 + Medium×50) / Total. Indicates search effectiveness.</span>
         </div>
       </div>
     </div>
     
     <div class="grid">
       <div class="card">
-        <div class="card-title">By Endpoint</div>
+        <div class="card-title">Tool Usage</div>
+        ${generateBarChart(toolCallsByName, totalToolCalls)}
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Search by Type</div>
         ${generateBarChart(metrics.queriesByEndpoint, metrics.totalQueries)}
       </div>
       
       <div class="card">
-        <div class="card-title">By Language</div>
-        ${generateBarChart(metrics.queriesByLanguage, metrics.totalQueries)}
-      </div>
-      
-      <div class="card">
-        <div class="card-title">Quality Distribution</div>
+        <div class="card-title">Search Quality</div>
         <div class="quality">
           <div class="q-box high has-tooltip">
             <div class="q-num">${metrics.scoreDistribution.high}</div>
-            <div class="q-label">High</div>
+            <div class="q-label">High ≥70%</div>
             <span class="tooltip">Queries with ≥70% relevance score. These found highly relevant content.</span>
           </div>
           <div class="q-box med has-tooltip">
@@ -205,7 +209,7 @@ function generateMetricsContent(
           </div>
           <div class="q-box low has-tooltip">
             <div class="q-num">${metrics.scoreDistribution.low}</div>
-            <div class="q-label">Low</div>
+            <div class="q-label">Low &lt;40%</div>
             <span class="tooltip">Queries with <40% relevance. May indicate missing content or unclear queries.</span>
           </div>
         </div>
@@ -217,9 +221,16 @@ function generateMetricsContent(
       </div>
     </div>
     
-    <div class="card">
-      <div class="card-title">Recent Queries</div>
-      ${generateQueriesTable(metrics.recentQueries)}
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Recent Tool Calls</div>
+        ${generateToolCallsTable(recentToolCalls)}
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Recent Searches</div>
+        ${generateQueriesTable(metrics.recentQueries)}
+      </div>
     </div>
   `;
 }
@@ -268,15 +279,41 @@ function generateRepoChart(documentsByRepo: Record<string, number>): string {
  * Generate recent queries table
  */
 function generateQueriesTable(queries: Metrics["recentQueries"]): string {
+  if (!queries || queries.length === 0) {
+    return '<p class="empty">No searches yet</p>';
+  }
   return `
     <table>
-      <thead><tr><th>Query</th><th>Type</th><th>Results</th><th>Score</th><th>Time</th></tr></thead>
+      <thead><tr><th>Query</th><th>Type</th><th>Score</th><th>Time</th></tr></thead>
       <tbody>
         ${queries
-          .slice(0, 15)
+          .slice(0, 10)
           .map(
             (q) =>
-              `<tr><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.query}</td><td>${q.endpoint}</td><td>${q.resultsCount}</td><td><span class="tag ${q.topScore >= 0.7 ? "high" : q.topScore >= 0.4 ? "med" : "low"}">${(q.topScore * 100).toFixed(0)}%</span></td><td style="color:var(--muted)">${new Date(q.timestamp).toLocaleTimeString()}</td></tr>`
+              `<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.query}</td><td>${q.endpoint}</td><td><span class="tag ${q.topScore >= 0.7 ? "high" : q.topScore >= 0.4 ? "med" : "low"}">${(q.topScore * 100).toFixed(0)}%</span></td><td style="color:var(--muted)">${new Date(q.timestamp).toLocaleTimeString()}</td></tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+/**
+ * Generate recent tool calls table
+ */
+function generateToolCallsTable(toolCalls: ToolCall[]): string {
+  if (!toolCalls || toolCalls.length === 0) {
+    return '<p class="empty">No tool calls yet</p>';
+  }
+  return `
+    <table>
+      <thead><tr><th>Tool</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody>
+        ${toolCalls
+          .slice(0, 10)
+          .map(
+            (t) =>
+              `<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.tool.replace("midnight-", "")}</td><td><span class="tag ${t.success ? "high" : "low"}">${t.success ? "✓" : "✗"}</span></td><td style="color:var(--muted)">${new Date(t.timestamp).toLocaleTimeString()}</td></tr>`
           )
           .join("")}
       </tbody>

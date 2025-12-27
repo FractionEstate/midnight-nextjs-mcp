@@ -19,6 +19,7 @@ import {
   logger,
   formatErrorResponse,
   setMCPLogCallback,
+  trackToolCall,
 } from "./utils/index.js";
 import { vectorStore } from "./db/index.js";
 import { allTools } from "./tools/index.js";
@@ -418,6 +419,7 @@ function registerToolHandlers(server: Server): void {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     logger.info(`Tool called: ${name}`, { args });
+    const startTime = Date.now();
 
     const tool = allTools.find((t) => t.name === name);
     if (!tool) {
@@ -425,6 +427,10 @@ function registerToolHandlers(server: Server): void {
         .map((t) => t.name)
         .slice(0, 5)
         .join(", ");
+
+      // Track failed tool call (unknown tool)
+      trackToolCall(name, false, Date.now() - startTime, CURRENT_VERSION);
+
       return {
         content: [
           {
@@ -446,6 +452,10 @@ function registerToolHandlers(server: Server): void {
 
     try {
       const result = await tool.handler(args as never);
+      const durationMs = Date.now() - startTime;
+
+      // Track successful tool call (fire-and-forget, won't block response)
+      trackToolCall(name, true, durationMs, CURRENT_VERSION);
 
       // Include prominent update prompt in ALL responses when outdated
       const updateWarning = getUpdateWarning();
@@ -498,7 +508,12 @@ function registerToolHandlers(server: Server): void {
         structuredContent: result,
       };
     } catch (error) {
+      const durationMs = Date.now() - startTime;
       logger.error(`Tool error: ${name}`, { error: String(error) });
+
+      // Track failed tool call
+      trackToolCall(name, false, durationMs, CURRENT_VERSION);
+
       const errorResponse = formatErrorResponse(error, `tool:${name}`);
       return {
         content: [
