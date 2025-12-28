@@ -13,12 +13,9 @@ import {
 } from "../utils/index.js";
 import { searchCache, fileCache, metadataCache } from "../utils/cache.js";
 import type { ExtendedToolDefinition, OutputSchema } from "../types/index.js";
-import { createRequire } from "module";
 
-// Read version from package.json (single source of truth)
-const require = createRequire(import.meta.url);
-const packageJson = require("../../package.json");
-const CURRENT_VERSION: string = packageJson.version;
+// Version injected at build time by tsup
+const CURRENT_VERSION = process.env.NPM_PACKAGE_VERSION ?? "unknown";
 
 // Schema definitions
 export const HealthCheckInputSchema = z.object({

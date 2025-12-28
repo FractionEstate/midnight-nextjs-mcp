@@ -36,12 +36,9 @@ import type {
   SamplingRequest,
   SamplingResponse,
 } from "./types/index.js";
-import { createRequire } from "module";
 
-// Read version from package.json (single source of truth)
-const require = createRequire(import.meta.url);
-const packageJson = require("../package.json");
-const CURRENT_VERSION: string = packageJson.version;
+// Version injected at build time by tsup
+const CURRENT_VERSION = process.env.NPM_PACKAGE_VERSION ?? "unknown";
 const SERVER_INFO = {
   name: "midnight-mcp",
   version: CURRENT_VERSION,
