@@ -1,20 +1,28 @@
-#!/usr/bin/env node
+/**
+ * Midnight MCP Server - Library exports
+ *
+ * For CLI usage, use bin.ts or run: npx midnight-mcp --help
+ */
 
-import { startServer } from "./server.js";
+// Server exports
+export { startServer, startHttpServer, initializeServer } from "./server.js";
 
-// Handle uncaught errors
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught exception:", error);
-  process.exit(1);
-});
+// Tool exports
+export { allTools } from "./tools/index.js";
 
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled rejection:", reason);
-  process.exit(1);
-});
+// Resource exports
+export {
+  allResources,
+  getDocumentation,
+  getCode,
+  getSchema,
+} from "./resources/index.js";
 
-// Start the server
-startServer().catch((error) => {
-  console.error("Failed to start server:", error);
-  process.exit(1);
-});
+// Prompt exports
+export { promptDefinitions, generatePrompt } from "./prompts/index.js";
+
+// Utility exports
+export { logger } from "./utils/index.js";
+
+// Type exports
+export type { ExtendedToolDefinition, OutputSchema } from "./types/index.js";

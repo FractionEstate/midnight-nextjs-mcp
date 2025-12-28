@@ -5,7 +5,7 @@ const packageJson = JSON.parse(readFileSync("./package.json", "utf-8"));
 const isDev = process.env.NODE_ENV === "development";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/bin.ts", "src/index.ts"],
   format: ["esm"],
   target: "node20",
   clean: true,
@@ -13,11 +13,8 @@ export default defineConfig({
   dts: true,
   splitting: false,
   shims: true,
-  banner: {
-    js: "#!/usr/bin/env node",
-  },
   define: {
     "process.env.NPM_PACKAGE_VERSION": JSON.stringify(packageJson.version),
   },
-  onSuccess: isDev ? "node dist/index.js" : undefined,
+  onSuccess: isDev ? "node dist/bin.js --stdio" : undefined,
 });

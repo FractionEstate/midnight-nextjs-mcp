@@ -1,5 +1,8 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -14,6 +17,8 @@ import {
   LoggingLevel,
   CompleteRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import express, { type Request, type Response } from "express";
+import { randomUUID } from "crypto";
 
 import {
   logger,
@@ -835,4 +840,148 @@ export async function startServer(): Promise<void> {
   setServerConnected(true);
 
   logger.info("Midnight MCP Server running on stdio");
+}
+
+// HTTP transport state
+const transports = {
+  streamable: {} as Record<string, StreamableHTTPServerTransport>,
+  sse: {} as Record<string, SSEServerTransport>,
+};
+
+/**
+ * Close all active transports
+ */
+async function closeTransports(
+  transportMap: Record<
+    string,
+    StreamableHTTPServerTransport | SSEServerTransport
+  >
+): Promise<void> {
+  const closePromises = Object.values(transportMap).map((transport) =>
+    transport.close?.().catch(() => {})
+  );
+  await Promise.all(closePromises);
+}
+
+/**
+ * Start the server with HTTP transport (SSE + Streamable HTTP)
+ */
+export async function startHttpServer(port: number = 3000): Promise<void> {
+  const mcpServer = await initializeServer();
+  const app = express();
+
+  // Parse JSON for the Streamable HTTP endpoint
+  app.use("/mcp", express.json());
+
+  // Health check endpoint
+  app.get("/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      version: CURRENT_VERSION,
+      transport: "http",
+    });
+  });
+
+  // Streamable HTTP endpoint with session management
+  app.post("/mcp", async (req: Request, res: Response) => {
+    const sessionId = req.headers["mcp-session-id"] as string | undefined;
+    let transport: StreamableHTTPServerTransport;
+
+    if (sessionId && transports.streamable[sessionId]) {
+      // Reuse existing transport
+      transport = transports.streamable[sessionId];
+    } else if (!sessionId && isInitializeRequest(req.body)) {
+      // New session initialization
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (newSessionId) => {
+          transports.streamable[newSessionId] = transport;
+          logger.debug(`New streamable session: ${newSessionId}`);
+        },
+      });
+      transport.onclose = () => {
+        if (transport.sessionId) {
+          delete transports.streamable[transport.sessionId];
+          logger.debug(`Streamable session closed: ${transport.sessionId}`);
+        }
+      };
+      await mcpServer.connect(transport);
+    } else {
+      // Invalid request
+      res.status(400).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32000,
+          message: "Bad Request: No valid session ID provided",
+        },
+        id: null,
+      });
+      return;
+    }
+
+    await transport.handleRequest(req, res, req.body);
+  });
+
+  // SSE endpoint for server-to-client notifications
+  app.get("/sse", async (_req: Request, res: Response) => {
+    logger.debug("New SSE connection");
+    const transport = new SSEServerTransport("/messages", res);
+    transports.sse[transport.sessionId] = transport;
+
+    res.on("close", () => {
+      delete transports.sse[transport.sessionId];
+      logger.debug(`SSE session closed: ${transport.sessionId}`);
+    });
+
+    await mcpServer.connect(transport);
+  });
+
+  // SSE message endpoint
+  app.post("/messages", async (req: Request, res: Response) => {
+    const sessionId = req.query.sessionId as string;
+    const transport = transports.sse[sessionId];
+
+    if (transport) {
+      await transport.handlePostMessage(req, res);
+    } else {
+      res.status(400).send(`No transport found for sessionId ${sessionId}`);
+    }
+  });
+
+  // Handle GET/DELETE for session management
+  const handleSessionRequest = async (req: Request, res: Response) => {
+    const sessionId = req.headers["mcp-session-id"] as string | undefined;
+    if (!sessionId || !transports.streamable[sessionId]) {
+      res.status(400).send("Invalid or missing session ID");
+      return;
+    }
+
+    const transport = transports.streamable[sessionId];
+    await transport.handleRequest(req, res);
+  };
+
+  app.get("/mcp", handleSessionRequest);
+  app.delete("/mcp", handleSessionRequest);
+
+  // Start server
+  const httpServer = app.listen(port, "127.0.0.1", () => {
+    logger.info(`Midnight MCP Server running on HTTP port ${port}`);
+    logger.info(`  Streamable HTTP: http://localhost:${port}/mcp`);
+    logger.info(`  SSE endpoint:    http://localhost:${port}/sse`);
+    logger.info(`  Health check:    http://localhost:${port}/health`);
+  });
+
+  // For HTTP mode, notifications are per-session (not global)
+  // Don't set isConnected globally as there's no single connection
+
+  // Graceful shutdown
+  process.on("SIGINT", async () => {
+    logger.info("Shutting down HTTP server...");
+    await closeTransports(transports.sse);
+    await closeTransports(transports.streamable);
+    httpServer.close(() => {
+      logger.info("Server shutdown complete");
+      process.exit(0);
+    });
+  });
 }
