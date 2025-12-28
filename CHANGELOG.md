@@ -19,9 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--stdio` - Use stdio transport (default, for Claude Desktop)
   - `--http` - Use HTTP transport
   - `--port <number>` - HTTP port (default: 3000)
+  - `--json` - Output in JSON format (default: YAML)
   - `--github-token <token>` - Override GITHUB_TOKEN env var
   - `--help` / `-h` - Show help
   - `--version` / `-v` - Show version
+
+- **YAML Output by Default** - Tool responses now use YAML format
+  - ~20-30% more token-efficient for LLM consumption
+  - Use `--json` flag to revert to JSON output
 
 - **Changesets** - Automated changelog and versioning
 - **server.json** - MCP registry metadata for IDE discovery

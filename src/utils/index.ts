@@ -65,3 +65,11 @@ export type {
   HostedSearchResponse,
   HostedSearchFilter,
 } from "./hosted-api.js";
+
+// Output serialization (YAML default, JSON optional)
+export {
+  serialize,
+  setOutputFormat,
+  isJsonOutput,
+  getOutputMimeType,
+} from "./serializer.js";

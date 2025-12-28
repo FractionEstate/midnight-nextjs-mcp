@@ -19,9 +19,5 @@
     "ai",
     "developer-tools"
   ],
-  "categories": [
-    "blockchain",
-    "developer-tools",
-    "code-generation"
-  ]
+  "categories": ["blockchain", "developer-tools", "code-generation"]
 }

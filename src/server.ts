@@ -25,6 +25,7 @@ import {
   formatErrorResponse,
   setMCPLogCallback,
   trackToolCall,
+  serialize,
 } from "./utils/index.js";
 import { vectorStore } from "./db/index.js";
 import { allTools } from "./tools/index.js";
@@ -440,15 +441,11 @@ function registerToolHandlers(server: Server): void {
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                error: `Unknown tool: ${name}`,
-                suggestion: `Available tools include: ${availableTools}...`,
-                hint: "Use ListTools to see all available tools",
-              },
-              null,
-              2
-            ),
+            text: serialize({
+              error: `Unknown tool: ${name}`,
+              suggestion: `Available tools include: ${availableTools}...`,
+              hint: "Use ListTools to see all available tools",
+            }),
           },
         ],
         isError: true,
@@ -495,7 +492,7 @@ function registerToolHandlers(server: Server): void {
           content: [
             {
               type: "text",
-              text: JSON.stringify(updatePrompt, null, 2),
+              text: serialize(updatePrompt),
             },
           ],
         };
@@ -505,7 +502,7 @@ function registerToolHandlers(server: Server): void {
         content: [
           {
             type: "text",
-            text: JSON.stringify(result, null, 2),
+            text: serialize(result),
           },
         ],
         // Include structured content for machine-readable responses
@@ -524,7 +521,7 @@ function registerToolHandlers(server: Server): void {
         content: [
           {
             type: "text",
-            text: JSON.stringify(errorResponse, null, 2),
+            text: serialize(errorResponse),
           },
         ],
         isError: true,
@@ -597,17 +594,13 @@ function registerResourceHandlers(server: Server): void {
             {
               uri,
               mimeType: "application/json",
-              text: JSON.stringify(
-                {
-                  error: `Resource not found: ${uri}`,
-                  suggestion: validPrefix
-                    ? `Check the resource path after '${validPrefix}'`
-                    : `Valid resource prefixes: ${resourceTypes.join(", ")}`,
-                  hint: "Use ListResources to see all available resources",
-                },
-                null,
-                2
-              ),
+              text: serialize({
+                error: `Resource not found: ${uri}`,
+                suggestion: validPrefix
+                  ? `Check the resource path after '${validPrefix}'`
+                  : `Valid resource prefixes: ${resourceTypes.join(", ")}`,
+                hint: "Use ListResources to see all available resources",
+              }),
             },
           ],
         };
@@ -630,7 +623,7 @@ function registerResourceHandlers(server: Server): void {
           {
             uri,
             mimeType: "application/json",
-            text: JSON.stringify(errorResponse, null, 2),
+            text: serialize(errorResponse),
           },
         ],
       };

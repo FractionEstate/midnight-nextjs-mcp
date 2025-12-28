@@ -186,6 +186,7 @@ npx midnight-mcp --http --port 3000
 ```
 
 Endpoints:
+
 - `/health` - Health check
 - `/mcp` - Streamable HTTP (MCP protocol)
 - `/sse` - Server-Sent Events
@@ -199,10 +200,13 @@ Options:
   --stdio          Use stdio transport (default, for Claude Desktop)
   --http           Use HTTP transport with SSE support
   --port <number>  HTTP port (default: 3000)
+  --json           Output in JSON (default: YAML for better LLM efficiency)
   --github-token   GitHub token (overrides GITHUB_TOKEN env var)
   -h, --help       Show help
   -v, --version    Show version
 ```
+
+> **Why YAML by default?** YAML is ~20-30% more token-efficient than JSON, which means AI assistants can process more context from tool responses.
 
 ### Local Mode
 
@@ -252,6 +256,5 @@ The hosted API runs on Cloudflare Workers + Vectorize. See [api/README.md](./api
 ## License
 
 MIT
-
 
 Thanks to all Stargazers ⭐️

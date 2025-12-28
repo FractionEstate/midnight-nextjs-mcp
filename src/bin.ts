@@ -5,6 +5,7 @@ import { resolve } from "path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { startServer, startHttpServer } from "./server.js";
+import { setOutputFormat } from "./utils/index.js";
 
 // Load .env from the current working directory
 config({ path: resolve(process.cwd(), ".env") });
@@ -46,6 +47,12 @@ const argv = yargs(hideBin(process.argv))
     type: "string",
     description: "GitHub token for API access (overrides GITHUB_TOKEN env var)",
   })
+  .option("json", {
+    type: "boolean",
+    description:
+      "Output results in JSON format (default: YAML for better LLM efficiency)",
+    default: false,
+  })
   .example(
     "$0 --stdio",
     "Start server with stdio transport (for Claude Desktop)"
@@ -62,6 +69,9 @@ const argv = yargs(hideBin(process.argv))
 if (argv["github-token"]) {
   process.env.GITHUB_TOKEN = argv["github-token"];
 }
+
+// Set output format (YAML by default, JSON if --json flag)
+setOutputFormat(argv.json);
 
 // Determine transport mode (default to stdio if --http not specified)
 const useHttp = argv.http;
