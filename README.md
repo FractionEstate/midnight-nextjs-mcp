@@ -98,29 +98,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 **No API keys required.** Restart your editor after adding the config.
 
-> **Why `@latest`?** Unlike cached npx packages that never auto-update, `@latest` ensures you get new features and fixes on each restart—important for an actively developed tool.
-
-### Updating to Latest Version
-
-Using `midnight-mcp@latest` in your config ensures you get updates automatically on restart.
-
-**Already using an older version without `@latest`?** Update your config manually:
-
-```diff
-- "args": ["-y", "midnight-mcp"]
-+ "args": ["-y", "midnight-mcp@latest"]
-```
-
-**Then clear npm cache and restart:**
-
-```bash
-# Clear npx cache (required to fetch new version)
-rm -rf ~/.npm/_npx
-
-# Restart your editor (Cmd+Q on Mac, then reopen)
-```
-
-> **Note:** AI agents cannot auto-update your config because they run in a sandboxed environment without access to your local filesystem.
+> **Why `@latest`?** Unlike cached npx packages that never auto-update, `@latest` ensures you get new features and fixes on each restart. If upgrading from an older config without `@latest`, also clear your npx cache: `rm -rf ~/.npm/_npx`
 
 ---
 
