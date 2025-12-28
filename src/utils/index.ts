@@ -73,3 +73,6 @@ export {
   isJsonOutput,
   getOutputMimeType,
 } from "./serializer.js";
+
+// Shared version constant
+export { CURRENT_VERSION } from "./version.js";

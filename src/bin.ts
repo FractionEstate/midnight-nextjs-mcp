@@ -28,11 +28,6 @@ process.on("unhandledRejection", (reason) => {
 const argv = yargs(hideBin(process.argv))
   .scriptName("midnight-mcp")
   .usage("$0 [options]")
-  .option("stdio", {
-    type: "boolean",
-    description: "Use stdio transport (default)",
-    default: false,
-  })
   .option("http", {
     type: "boolean",
     description: "Use HTTP transport with SSE support",

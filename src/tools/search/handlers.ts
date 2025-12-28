@@ -108,12 +108,13 @@ async function tryHostedSearch<T>(
 
   try {
     const response = await hostedSearchFn();
-    searchCache.set(cacheKey, response);
+    const finalResponse = {
+      ...response,
+      ...(warnings.length > 0 && { warnings }),
+    } as T;
+    searchCache.set(cacheKey, finalResponse);
     return {
-      result: {
-        ...response,
-        ...(warnings.length > 0 && { warnings }),
-      } as T,
+      result: finalResponse,
       cached: true,
     };
   } catch (error) {
@@ -225,13 +226,12 @@ export async function searchTypeScript(input: SearchTypeScriptInput) {
     mode: isHostedMode() ? "hosted" : "local",
   });
 
-  // Check cache
+  // Check cache (includeExamples not used in filtering, excluded from key)
   const cacheKey = createCacheKey(
     "typescript",
     sanitizedQuery,
     limit,
-    input.includeTypes,
-    input.includeExamples
+    input.includeTypes
   );
   const cached = checkSearchCache(cacheKey);
   if (cached) return cached;

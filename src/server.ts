@@ -43,8 +43,7 @@ import type {
   SamplingResponse,
 } from "./types/index.js";
 
-// Version injected at build time by tsup
-const CURRENT_VERSION = process.env.NPM_PACKAGE_VERSION ?? "unknown";
+import { CURRENT_VERSION } from "./utils/version.js";
 const SERVER_INFO = {
   name: "midnight-mcp",
   version: CURRENT_VERSION,
@@ -898,7 +897,19 @@ export async function startHttpServer(port: number = 3000): Promise<void> {
           logger.debug(`Streamable session closed: ${transport.sessionId}`);
         }
       };
-      await mcpServer.connect(transport);
+      try {
+        await mcpServer.connect(transport);
+      } catch (error) {
+        logger.error("Failed to connect streamable transport", {
+          error: String(error),
+        });
+        res.status(500).json({
+          jsonrpc: "2.0",
+          error: { code: -32603, message: "Internal error: connection failed" },
+          id: null,
+        });
+        return;
+      }
     } else {
       // Invalid request
       res.status(400).json({
@@ -926,7 +937,15 @@ export async function startHttpServer(port: number = 3000): Promise<void> {
       logger.debug(`SSE session closed: ${transport.sessionId}`);
     });
 
-    await mcpServer.connect(transport);
+    try {
+      await mcpServer.connect(transport);
+    } catch (error) {
+      delete transports.sse[transport.sessionId];
+      logger.error(`SSE connection failed: ${transport.sessionId}`, {
+        error: String(error),
+      });
+      res.status(500).end();
+    }
   });
 
   // SSE message endpoint
@@ -968,7 +987,7 @@ export async function startHttpServer(port: number = 3000): Promise<void> {
   // Don't set isConnected globally as there's no single connection
 
   // Graceful shutdown
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     logger.info("Shutting down HTTP server...");
     await closeTransports(transports.sse);
     await closeTransports(transports.streamable);
@@ -976,5 +995,7 @@ export async function startHttpServer(port: number = 3000): Promise<void> {
       logger.info("Server shutdown complete");
       process.exit(0);
     });
-  });
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }

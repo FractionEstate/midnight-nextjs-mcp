@@ -19,8 +19,7 @@ import type {
   AutoUpdateConfigInput,
 } from "./schemas.js";
 
-// Version injected at build time by tsup
-const CURRENT_VERSION = process.env.NPM_PACKAGE_VERSION ?? "unknown";
+import { CURRENT_VERSION } from "../../utils/version.js";
 
 /**
  * Perform health check on the MCP server
