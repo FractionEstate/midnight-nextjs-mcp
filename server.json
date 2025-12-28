@@ -1,0 +1,27 @@
+{
+  "name": "midnight-mcp",
+  "version": "0.2.0",
+  "description": "MCP Server for Midnight Blockchain Development - Compact smart contracts, zero-knowledge proofs, and TypeScript integration",
+  "author": "Idris Olubisi",
+  "license": "MIT",
+  "repository": "https://github.com/Olanetsoft/midnight-mcp",
+  "homepage": "https://github.com/Olanetsoft/midnight-mcp#readme",
+  "transport": ["stdio", "http"],
+  "tools": 26,
+  "resources": 9,
+  "prompts": 5,
+  "keywords": [
+    "midnight",
+    "blockchain",
+    "compact",
+    "zero-knowledge",
+    "smart-contracts",
+    "ai",
+    "developer-tools"
+  ],
+  "categories": [
+    "blockchain",
+    "developer-tools",
+    "code-generation"
+  ]
+}

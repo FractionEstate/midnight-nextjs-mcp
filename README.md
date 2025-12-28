@@ -176,6 +176,34 @@ The API indexes **39 Midnight repositories**:
 
 ## Advanced Configuration
 
+### HTTP Mode
+
+Run as an HTTP server for web integrations or remote deployment:
+
+```bash
+# Start HTTP server on port 3000
+npx midnight-mcp --http --port 3000
+```
+
+Endpoints:
+- `/health` - Health check
+- `/mcp` - Streamable HTTP (MCP protocol)
+- `/sse` - Server-Sent Events
+
+### CLI Options
+
+```bash
+npx midnight-mcp --help
+
+Options:
+  --stdio          Use stdio transport (default, for Claude Desktop)
+  --http           Use HTTP transport with SSE support
+  --port <number>  HTTP port (default: 3000)
+  --github-token   GitHub token (overrides GITHUB_TOKEN env var)
+  -h, --help       Show help
+  -v, --version    Show version
+```
+
 ### Local Mode
 
 Run everything locally for privacy or offline use:

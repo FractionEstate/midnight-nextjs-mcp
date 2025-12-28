@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-12-28
+
+### Added
+
+- **HTTP Transport Support** - Run as HTTP server with SSE + Streamable HTTP
+  - `npx midnight-mcp --http --port 3000`
+  - Health check endpoint at `/health`
+  - Streamable HTTP at `/mcp`
+  - SSE endpoint at `/sse`
+
+- **CLI with yargs** - Rich command-line interface
+  - `--stdio` - Use stdio transport (default, for Claude Desktop)
+  - `--http` - Use HTTP transport
+  - `--port <number>` - HTTP port (default: 3000)
+  - `--github-token <token>` - Override GITHUB_TOKEN env var
+  - `--help` / `-h` - Show help
+  - `--version` / `-v` - Show version
+
+- **Changesets** - Automated changelog and versioning
+- **server.json** - MCP registry metadata for IDE discovery
+
+### Changed
+
+- **Build system migrated from tsc to tsup**
+  - 10-100x faster builds (55ms → 40ms)
+  - Single bundled output (314KB vs 50+ files)
+  - Build-time version injection (no more runtime `createRequire`)
+
+- **Project structure improved**
+  - `bin.ts` - Dedicated CLI entry point
+  - `index.ts` - Library exports only
+  - Separate `typecheck` script (`tsc --noEmit`)
+
+### Scripts
+
+```bash
+npm run build        # tsup (fast bundling)
+npm run typecheck    # Type checking only
+npm run dev          # tsup --watch (auto-reload)
+npm start            # stdio mode (default)
+npm run start:http   # HTTP mode on port 3000
+```
+
 ## [0.1.41] - 2025-12-27
 
 ### Fixed
