@@ -43,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `index.ts` - Library exports only
   - Separate `typecheck` script (`tsc --noEmit`)
 
+- **Tool pattern standardized** - All tool categories now follow consistent folder structure
+  - `search/`, `health/`, `analyze/`, `generation/`, `meta/` folders
+  - Each with `schemas.ts`, `handlers.ts`, `tools.ts`, `index.ts`
+  - Matches `repository/` pattern already in use
+  - Easier to maintain and test
+
 ### Scripts
 
 ```bash
