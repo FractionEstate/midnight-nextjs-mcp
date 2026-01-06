@@ -39,6 +39,26 @@ describe("Documentation Resources", () => {
     expect(content).toContain("NIGHT");
     expect(content).toContain("token");
   });
+
+  it("should get security best practices documentation", async () => {
+    const content = await getDocumentation("midnight://docs/security-best-practices");
+
+    expect(content).toBeTruthy();
+    expect(content).toContain("Zero-Knowledge Proofs");
+    expect(content).toContain("disclose");
+    expect(content).toContain("Least Disclosure");
+    expect(content).toContain("Module 7");
+  });
+
+  it("should get developer tools documentation", async () => {
+    const content = await getDocumentation("midnight://docs/developer-tools");
+
+    expect(content).toBeTruthy();
+    expect(content).toContain("compactc");
+    expect(content).toContain("VS Code");
+    expect(content).toContain("--skip-zk");
+    expect(content).toContain("problemMatcher");
+  });
 });
 
 describe("Code Resources", () => {
@@ -110,6 +130,40 @@ describe("Code Resources", () => {
     expect(content).toContain("async");
     expect(content).toContain("params");
     expect(content).toContain("searchParams");
+  });
+
+  // Infrastructure resources
+  it("should list infrastructure resources", () => {
+    const uris = codeResources.map((r) => r.uri);
+    expect(uris).toContain("midnight://code/infrastructure/backend-node");
+    expect(uris).toContain("midnight://code/infrastructure/relay-node");
+    expect(uris).toContain("midnight://code/infrastructure/turbo-monorepo-complete");
+  });
+
+  it("should get backend node configuration guide", async () => {
+    const content = await getCode("midnight://code/infrastructure/backend-node");
+    expect(content).toBeTruthy();
+    expect(content).toContain("midnight-backend");
+    expect(content).toContain("docker-compose");
+    expect(content).toContain("LOCAL ONLY");
+  });
+
+  it("should get relay node implementation guide", async () => {
+    const content = await getCode("midnight://code/infrastructure/relay-node");
+    expect(content).toBeTruthy();
+    expect(content).toContain("MidnightRelay");
+    expect(content).toContain("submitTransaction");
+    expect(content).toContain("fee");
+  });
+
+  it("should get complete turbo monorepo structure", async () => {
+    const content = await getCode("midnight://code/infrastructure/turbo-monorepo-complete");
+    expect(content).toBeTruthy();
+    expect(content).toContain("apps/");
+    expect(content).toContain("midnight-backend/");
+    expect(content).toContain("relay-node/");
+    expect(content).toContain("contracts/");
+    expect(content).toContain("shared/");
   });
 });
 

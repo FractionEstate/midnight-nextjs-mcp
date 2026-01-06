@@ -983,10 +983,10 @@ function getRepoType(repoName: string): string {
 function getInstallCommand(repoName: string, version: string): string {
   const name = repoName.toLowerCase();
   if (name === "compact" || name.includes("compact")) {
-    return `npx @aspect-sh/pnpm dlx @midnight-ntwrk/create-midnight-app@${version}`;
+    return `npx @midnight-ntwrk/compact-js-command@${version}`;
   }
   if (name === "midnight-js" || name.includes("js")) {
-    return `npm install @midnight-ntwrk/midnight-js@${version}`;
+    return `npm install @midnight-ntwrk/midnight-js-contracts@${version} @midnight-ntwrk/midnight-js-types@${version}`;
   }
   return `git clone https://github.com/midnight-ntwrk/${repoName}.git && cd ${repoName} && git checkout ${version}`;
 }

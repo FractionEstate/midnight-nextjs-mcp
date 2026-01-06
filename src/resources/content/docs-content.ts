@@ -310,7 +310,7 @@ export circuit reveal(): Field {
   const expected = compute_commitment(value, salt);
   assert(disclose(expected == commitment), "Value doesn't match commitment");
   assert(disclose(!is_revealed), "Already revealed");
-  
+
   revealed_value = disclose(value);
   is_revealed = true;
   return disclose(value);
@@ -455,7 +455,7 @@ export { Maybe, Either, CoinInfo };
 These contracts compile successfully and demonstrate correct patterns:
 
 1. **Counter** (beginner): \`midnightntwrk/example-counter\`
-2. **Bulletin Board** (intermediate): \`midnightntwrk/example-bboard\`  
+2. **Bulletin Board** (intermediate): \`midnightntwrk/example-bboard\`
 3. **Naval Battle Game** (advanced): \`ErickRomeroDev/naval-battle-game_v2\`
 4. **Sea Battle** (advanced): \`bricktowers/midnight-seabattle\`
 
@@ -467,7 +467,31 @@ When in doubt, reference these repos for working syntax.
 ## Installation
 
 \`\`\`bash
-npm install @midnight-ntwrk/midnight-js-contracts
+# Core SDK packages (v2.1.0)
+npm install @midnight-ntwrk/midnight-js-contracts@^2.1.0
+npm install @midnight-ntwrk/midnight-js-types@^2.1.0
+npm install @midnight-ntwrk/midnight-js-utils@^2.1.0
+
+# Contract compilation (v2.3.0)
+npm install @midnight-ntwrk/compact-js@^2.3.0
+npm install @midnight-ntwrk/compact-js-command@^2.3.0
+
+# Runtime (v0.9.0)
+npm install @midnight-ntwrk/compact-runtime@^0.9.0
+
+# Wallet integration (v3.0.0 / v5.0.0)
+npm install @midnight-ntwrk/dapp-connector-api@^3.0.0
+npm install @midnight-ntwrk/wallet-api@^5.0.0
+
+# Providers
+npm install @midnight-ntwrk/midnight-js-http-client-proof-provider@^2.1.0
+npm install @midnight-ntwrk/midnight-js-indexer-public-data-provider@^2.1.0
+npm install @midnight-ntwrk/midnight-js-level-private-state-provider@^2.1.0
+npm install @midnight-ntwrk/midnight-js-node-zk-config-provider@^2.1.0
+
+# Platform utilities
+npm install @midnight-ntwrk/platform-js@^2.1.0
+npm install @midnight-ntwrk/midnight-js-network-id@^2.1.0
 \`\`\`
 
 ## Core Types
@@ -506,9 +530,9 @@ const { newPrivateState, returnValue, proof } = result;
 ### Providers
 
 \`\`\`typescript
-import { 
+import {
   MidnightProvider,
-  createMidnightProvider 
+  createMidnightProvider
 } from '@midnight-ntwrk/midnight-js-contracts';
 
 const provider = await createMidnightProvider({
@@ -918,7 +942,7 @@ Where:
 - 50% to Cardano, 20% to Bitcoin, 30% to others
 - Minimum $100 USD equivalent required
 
-### Phase 2: Scavenger Mine (30 days)  
+### Phase 2: Scavenger Mine (30 days)
 - Computational puzzles (accessible to public)
 - Claims unclaimed Glacier Drop tokens
 - Seeds network constituents
@@ -951,7 +975,7 @@ declare global {
 }
 
 function isWalletAvailable(): boolean {
-  return typeof window !== 'undefined' 
+  return typeof window !== 'undefined'
     && window.midnight?.mnLace !== undefined;
 }
 \`\`\`
@@ -1206,5 +1230,443 @@ try {
    rm -rf contract/*.cjs contract/*.prover contract/*.verifier
    compact compile src/contract.compact contract/
    \`\`\`
+`,
+
+  // Security Best Practices Resource (Module 7)
+  "midnight://docs/security-best-practices": `# Security and Best Practices for Midnight DApps
+## Based on Module 7 of Midnight Academy
+
+This guide summarizes the best practices developers should follow to maintain
+privacy, integrity, and security when building DApps on Midnight.
+
+## Core Security Principles
+
+### 1. Leverage Zero-Knowledge Proofs (ZKPs)
+
+Midnight DApps must use ZKPs to validate private data conditions without
+revealing the data itself. Contracts written in Compact rely on zkSNARKs,
+ensuring proofs are generated off-chain and only validation artifacts are submitted.
+
+**DO:**
+- Use ZKPs to prove knowledge, eligibility, or compliance
+- Generate proofs off-chain with the proof server
+- Submit only validation artifacts to the ledger
+
+**DON'T:**
+- Design workflows that depend on exposing raw private data
+- Include sensitive values in circuit outputs without \`disclose()\`
+
+### 2. Enforce Explicit Disclosure
+
+Compact treats all data as private by default. Developers must use the
+\`disclose()\` function when specific information must be shared.
+
+\`\`\`compact
+// BAD: Implicitly exposing private data
+export circuit getBalance(): Field {
+  return privateBalance; // ❌ Compiler error - private data
+}
+
+// GOOD: Explicit disclosure when necessary
+export circuit revealBalance(): Field {
+  return disclose(privateBalance); // ✅ Clear user consent
+}
+\`\`\`
+
+**Review every \`disclose()\` call in your contract:**
+- Is the disclosure necessary?
+- Is it documented?
+- Is it limited in scope?
+
+### 3. Keep Private Data Off-Chain
+
+Private data should never be sent to Midnight's ledger or included in
+indexer requests. It must be processed by the proof server and referenced
+on-chain only through commitments.
+
+**Ensure DApp frontends do not inadvertently expose private input values in:**
+- API calls
+- Query parameters
+- Logs
+- Analytics tools
+
+### 4. Follow the Principle of Least Disclosure
+
+Design contracts to expose only the minimum amount of data required for
+functionality, regulation, or UX.
+
+#### Example: The Naïve Auction Problem
+
+If you prove "I can bid up to 10 tokens", you're disclosing that your max
+bid is exactly 10. A more privacy-preserving approach:
+- Prove "I can outbid the current highest bid"
+- Prove "I can pay some amount above X"
+
+#### Example: Public Key Reuse vs Derived Keys
+
+If the same public key is used across multiple contracts, an observer can
+correlate interactions between contracts. A more privacy-conscious approach:
+
+\`\`\`compact
+// Derive a unique public key per contract
+export circuit publicKey(sk: Bytes<32>, sequence: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([
+    pad(32, "myapp:pk:"),
+    sequence,
+    sk
+  ]);
+}
+\`\`\`
+
+### 5. Use Opaque Types for Sensitive Inputs
+
+Opaque types allow user inputs to pass through the system without revealing
+internal structure or values to the contract.
+
+\`\`\`compact
+// Use opaque wrappers for sensitive inputs
+export circuit submitCredential(credential: Opaque<"credential">): [] {
+  // Process without exposing internal structure
+}
+\`\`\`
+
+### 6. Test in Isolated Environments
+
+Midnight provides a local stack using Docker Compose. Always run unit and
+integration tests in a local environment before publishing contracts to TestNet.
+
+\`\`\`bash
+# Start local Midnight stack
+cd midnight-backend/node
+docker-compose up -d
+
+# Run tests
+npm test
+\`\`\`
+
+### 7. Stay Updated
+
+Address formats (e.g., Bech32m) and APIs evolve. Track release notes and
+upgrade SDKs to avoid compatibility issues:
+
+- midnight-js SDK: Check for breaking changes
+- Compact compiler: Update pragma version ranges
+- Lace wallet: Verify signing workflow compatibility
+
+## Real-World Application Patterns
+
+### Secure Voting System
+- Verify eligibility without disclosing voter identity
+- Encrypt votes and submit to ledger
+- Use ZK aggregation for publicly auditable results
+
+### KYC-Compliant Token Sales
+- Submit off-chain credentials to trusted party
+- Issue verifiable credentials
+- Generate ZKP to prove facts (age, residency) without exposing documents
+
+### Private Asset Transfers
+- Shield ownership changes
+- Verify history through proof chains
+- Reveal identities only to authorized parties when required
+
+## Security Checklist
+
+- [ ] All private data processed off-chain by proof server
+- [ ] Every \`disclose()\` call is intentional and documented
+- [ ] No sensitive data in API calls, logs, or analytics
+- [ ] Unique public keys derived per contract (if needed)
+- [ ] Opaque types used for sensitive credentials
+- [ ] Tests run in isolated local environment
+- [ ] SDK versions tracked and updated
+- [ ] Circuit design minimizes information leakage
+`,
+
+  // Developer Tools Reference
+  "midnight://docs/developer-tools": `# Midnight Developer Tools
+
+This guide covers the essential development tools for building Compact smart contracts.
+
+## Compact Compiler (compactc)
+
+### Overview
+
+The Compact compiler takes a Compact source program and translates it into several target files.
+
+### Synopsis
+
+\`\`\`bash
+compactc [flags] sourcepath targetpath
+\`\`\`
+
+### Output Files
+
+For a source file \`src/myContract.compact\`, the compiler produces:
+
+\`\`\`
+targetdir/
+├── contract/
+│   ├── index.d.cts      # TypeScript type definitions
+│   ├── index.cjs        # JavaScript source
+│   └── index.cjs.map    # Source map
+├── zkir/
+│   ├── foo.zkir         # ZK circuit for exported circuit 'foo'
+│   └── bar.zkir         # ZK circuit for exported circuit 'bar'
+└── keys/
+    ├── foo.prover       # Proving key
+    ├── foo.verifier     # Verification key
+    ├── bar.prover
+    └── bar.verifier
+\`\`\`
+
+### Compiler Flags
+
+| Flag | Description |
+|------|-------------|
+| \`--help\` | Print help text and exit |
+| \`--version\` | Print compiler version and exit |
+| \`--language-version\` | Print language version and exit |
+| \`--vscode\` | Omit newlines in errors for VS Code |
+| \`--skip-zk\` | Skip proving key generation (faster builds) |
+| \`--no-communications-commitment\` | Omit contract communications commitment |
+| \`--sourceRoot <path>\` | Override sourceRoot in source-map |
+| \`--trace-passes\` | Print compiler tracing info |
+
+### Example Usage
+
+\`\`\`bash
+# Full compilation with ZK circuits
+compactc src/myContract.compact obj/myContract
+
+# Fast compilation without ZK (for syntax checking)
+compactc --skip-zk src/myContract.compact obj/myContract
+
+# With VS Code error formatting
+compactc --vscode src/myContract.compact obj/myContract
+\`\`\`
+
+### Environment Variables
+
+\`\`\`bash
+# Set include paths (colon-separated on Unix, semicolon on Windows)
+export COMPACT_PATH="./src:./lib:./node_modules/@midnight/contracts"
+\`\`\`
+
+### Standard Library Import
+
+Every Compact source program should import the standard library:
+
+\`\`\`compact
+import CompactStandardLibrary;
+\`\`\`
+
+---
+
+## VS Code Extension for Compact
+
+The Visual Studio Code extension assists with writing and debugging Compact smart contracts.
+
+### Features
+
+#### 1. Syntax Highlighting
+
+Recognizes and formats:
+- Compact keywords (\`enum\`, \`struct\`, \`circuit\`, \`ledger\`, etc.)
+- String, boolean, and numeric literals
+- Comments
+- Parentheses matching
+
+#### 2. Code Snippets
+
+Available snippets when editing \`.compact\` files:
+
+| Trigger | Description |
+|---------|-------------|
+| \`ledger\` / \`state\` | Ledger declaration |
+| \`constructor\` | Constructor in ledger |
+| \`circuit\` / \`function\` | Exported circuit |
+| \`witness\` / \`private\` | Witness function |
+| \`stdlib\` / \`init\` | Import standard library |
+| \`if\` / \`cond\` | If statement |
+| \`map\` / \`for\` | Map operation |
+| \`fold\` | Fold operation |
+| \`enum\` | Enum declaration |
+| \`struct\` | Struct declaration |
+| \`module\` | Module declaration |
+| \`assert\` | Assertion |
+| \`pragma\` | Pragma declaration |
+| \`compact\` | Full contract template |
+
+#### 3. Build Integration
+
+Add to your \`package.json\`:
+
+\`\`\`json
+{
+  "scripts": {
+    "compact": "compact compile --vscode ./src/myContract.compact ./src/managed/myContract"
+  }
+}
+\`\`\`
+
+Then compile with:
+
+\`\`\`bash
+yarn compact
+# or
+npm run compact
+\`\`\`
+
+#### 4. VS Code Tasks Configuration
+
+Create \`.vscode/tasks.json\` for fast iteration:
+
+\`\`\`json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Compile Compact (fast)",
+      "type": "shell",
+      "command": "npx compact compile --vscode --skip-zk \${file} \${workspaceFolder}/src/managed",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true,
+        "revealProblems": "onProblem"
+      },
+      "problemMatcher": [
+        "$compactException",
+        "$compactInternal",
+        "$compactCommandNotFound"
+      ]
+    }
+  ]
+}
+\`\`\`
+
+The \`--skip-zk\` flag skips ZK circuit generation for faster syntax checking during development.
+
+#### 5. Problem Matchers
+
+Configure problem matchers to show compiler errors in VS Code's Problems tab:
+
+\`\`\`json
+"problemMatcher": [
+  "$compactException",
+  "$compactInternal",
+  "$compactCommandNotFound"
+]
+\`\`\`
+
+#### 6. New Contract from Template
+
+1. Open Command Palette (Cmd/Ctrl+Shift+P)
+2. Select "Snippets: Fill File with Snippet"
+3. Choose "Compact"
+
+This creates a skeleton contract with an empty ledger and single circuit.
+
+---
+
+## Recommended Development Workflow
+
+### 1. Project Setup
+
+\`\`\`bash
+# Create new project
+npx create-mn-app my-dapp
+cd my-dapp
+
+# Install dependencies
+pnpm install
+\`\`\`
+
+### 2. Development Loop
+
+\`\`\`bash
+# Fast compile (syntax check only)
+npx compact compile --skip-zk src/contract.compact build/
+
+# Full compile (with ZK circuits)
+npx compact compile src/contract.compact build/
+
+# Run tests
+pnpm test
+\`\`\`
+
+### 3. Build Scripts (package.json)
+
+\`\`\`json
+{
+  "scripts": {
+    "compact:check": "compact compile --skip-zk ./src/contract.compact ./build",
+    "compact:build": "compact compile ./src/contract.compact ./build",
+    "compact:watch": "nodemon --watch src -e compact --exec 'npm run compact:check'",
+    "test": "vitest",
+    "build": "npm run compact:build && tsc"
+  }
+}
+\`\`\`
+
+### 4. CI/CD Integration
+
+\`\`\`yaml
+# .github/workflows/build.yml
+name: Build
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run compact:build
+      - run: pnpm test
+\`\`\`
+
+---
+
+## Troubleshooting
+
+### Compiler Not Found
+
+\`\`\`bash
+# Ensure compiler is in PATH
+which compactc
+
+# Or use npx
+npx compact compile ...
+\`\`\`
+
+### Include Files Not Found
+
+\`\`\`bash
+# Set COMPACT_PATH environment variable
+export COMPACT_PATH="./src:./lib"
+
+# Or use relative paths in include statements
+include "./types";
+\`\`\`
+
+### Slow Compilation
+
+Use \`--skip-zk\` during development:
+\`\`\`bash
+compactc --skip-zk src/contract.compact build/
+\`\`\`
+
+### VS Code Errors Not Showing
+
+Ensure you're using \`--vscode\` flag and have problem matchers configured in \`tasks.json\`.
 `,
 };

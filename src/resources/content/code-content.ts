@@ -1,340 +1,280 @@
 /**
  * Embedded code examples and templates
  * Separated from code.ts for better maintainability
+ * Updated to align with Midnight Compact 0.16-0.18 syntax
  */
 
 export const EMBEDDED_CODE: Record<string, string> = {
   "midnight://code/examples/counter": `// Counter Example Contract
 // A simple contract demonstrating basic Compact concepts
+// Based on midnightntwrk/example-counter
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
 
-ledger {
-  // Public counter - visible to everyone
-  counter: Counter;
+import CompactStandardLibrary;
 
-  // Track last modifier (public)
-  lastModifier: Opaque<"address">;
-}
+// Public state - visible to everyone
+export ledger round: Counter;
 
 // Increment the counter
-export circuit increment(amount: Field): Field {
+export circuit increment(): [] {
+  round.increment(1);
+}
+
+// Optional: increment by specific amount
+export circuit incrementBy(amount: Field): [] {
   // Validate input
   assert(amount > 0, "Amount must be positive");
   assert(amount <= 100, "Amount too large");
 
-  // Update counter
-  ledger.counter.increment(amount);
-
-  // Return new value
-  return ledger.counter.value();
+  round.increment(amount);
 }
 
 // Decrement the counter
-export circuit decrement(amount: Field): Field {
-  // Validate input
+export circuit decrement(amount: Field): [] {
   assert(amount > 0, "Amount must be positive");
-  assert(ledger.counter.value() >= amount, "Counter would go negative");
+  assert(round as Field >= amount, "Counter would go negative");
 
-  // Update counter
-  ledger.counter.decrement(amount);
-
-  // Return new value
-  return ledger.counter.value();
+  // Note: Counter doesn't have decrement, use raw field operations
+  // This is for illustration only
 }
 
-// Read current value (view function)
+// Read current value
 export circuit getValue(): Field {
-  return ledger.counter.value();
+  return round as Field;
 }
 `,
 
   "midnight://code/examples/bboard": `// Bulletin Board Example Contract
 // Demonstrates private messaging with selective disclosure
+// Based on midnightntwrk/example-bboard
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
 
-ledger {
-  // Public: message count and IDs
-  messageCount: Counter;
-  messageIds: Set<Field>;
+import CompactStandardLibrary;
 
-  // Private: actual message contents
-  @private
-  messages: Map<Field, Opaque<"string">>;
-
-  // Private: message authors
-  @private
-  authors: Map<Field, Opaque<"address">>;
+export enum State {
+  VACANT,
+  OCCUPIED
 }
 
-// Post a new message (content is private)
-export circuit postMessage(content: Opaque<"string">, author: Opaque<"address">): Field {
-  // Generate unique message ID
-  const messageId = ledger.messageCount.value();
+export ledger state: State;
+export ledger message: Maybe<Opaque<"string">>;
+export ledger sequence: Counter;
+export ledger owner: Bytes<32>;
 
-  // Store message privately
-  ledger.messages.insert(messageId, content);
-  ledger.authors.insert(messageId, author);
-
-  // Update public counters
-  ledger.messageCount.increment(1);
-  ledger.messageIds.add(messageId);
-
-  return messageId;
+constructor() {
+  state = State.VACANT;
+  message = none<Opaque<"string">>();
+  sequence.increment(1);
 }
 
-// Witness to fetch message content
-witness getMessageContent(id: Field): Opaque<"string"> {
-  return ledger.messages.get(id);
+// Witness to get the local secret key (off-chain computation)
+witness localSecretKey(): Bytes<32>;
+
+// Post a new message to the board
+export circuit post(newMessage: Opaque<"string">): [] {
+  assert(state == State.VACANT, "Attempted to post to an occupied board");
+  owner = disclose(publicKey(localSecretKey(), sequence as Field as Bytes<32>));
+  message = disclose(some<Opaque<"string">>(newMessage));
+  state = State.OCCUPIED;
 }
 
-// Reveal a message publicly (owner's choice)
-export circuit revealMessage(id: Field): Opaque<"string"> {
-  assert(ledger.messageIds.contains(id), "Message not found");
-
-  const content = getMessageContent(id);
-  return disclose(content);
+// Take down a message (only owner can do this)
+export circuit takeDown(): Opaque<"string"> {
+  assert(state == State.OCCUPIED, "Attempted to take down post from an empty board");
+  assert(owner == publicKey(localSecretKey(), sequence as Field as Bytes<32>), "Attempted to take down post, but not the current owner");
+  const formerMsg = message.value;
+  state = State.VACANT;
+  sequence.increment(1);
+  message = none<Opaque<"string">>();
+  return formerMsg;
 }
 
-// Get total message count
-export circuit getMessageCount(): Field {
-  return ledger.messageCount.value();
+// Derive a unique public key per session for privacy
+export circuit publicKey(sk: Bytes<32>, sequence: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "bboard:pk:"), sequence, sk]);
+}
+`,
+
+  "midnight://code/examples/simple-counter": `// Simple Counter - Minimal Example
+// The simplest possible Compact contract for beginners
+
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+
+// Public counter state
+export ledger count: Counter;
+
+// Single circuit to increment
+export circuit increment(): [] {
+  count.increment(1);
 }
 `,
 
   "midnight://code/patterns/state-management": `// State Management Pattern
 // Best practices for managing public and private state
+// Updated for Compact 0.16-0.18 syntax
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
 
-ledger {
-  // PUBLIC STATE
-  // - Use for data that should be transparent
-  // - Visible in blockchain explorers
-  // - Can be queried by anyone
+import CompactStandardLibrary;
 
-  totalSupply: Counter;
-  publicConfig: Field;
+// PUBLIC STATE - Visible to everyone
+export ledger totalSupply: Counter;
+export ledger publicConfig: Field;
 
-  // PRIVATE STATE
-  // - Use for sensitive user data
-  // - Only owner can read
-  // - Requires witnesses to access in circuits
+// PRIVATE STATE - Only owner can read
+// Note: Use witnesses to access private state in circuits
+// @private annotation marks data as shielded
 
-  @private
-  userSecrets: Map<Opaque<"address">, Bytes<32>>;
-
-  @private
-  privateBalances: Map<Opaque<"address">, Field>;
-}
+export ledger privateData: Maybe<Bytes<32>>;
 
 // Reading public state is straightforward
 export circuit getTotalSupply(): Field {
-  return ledger.totalSupply.value();
+  return totalSupply as Field;
 }
 
-// Reading private state requires a witness
-witness getUserSecret(user: Opaque<"address">): Bytes<32> {
-  return ledger.userSecrets.get(user);
+// Initialize private data
+export circuit setPrivateData(data: Bytes<32>): [] {
+  privateData = some(data);
 }
 
-// Using private state in a circuit
-export circuit proveSecretKnowledge(
-  user: Opaque<"address">,
-  secretHash: Bytes<32>
-): Boolean {
-  const secret = getUserSecret(user);
+// Witness for off-chain computation with private data
+witness getSecret(): Bytes<32>;
 
-  // Prove knowledge without revealing secret
-  assert(hash(secret) == secretHash);
-  return true;
+// Prove knowledge of secret without revealing
+export circuit proveSecretKnowledge(expectedHash: Bytes<32>): [] {
+  const secret = getSecret();
+  assert(persistentHash<Vector<1, Bytes<32>>>([secret]) == expectedHash, "Invalid secret");
 }
 
-// Selective disclosure pattern
-export circuit revealBalance(user: Opaque<"address">): Field {
-  const balance = getPrivateBalance(user);
-  // Explicitly reveal - user's choice
-  return disclose(balance);
-}
-
-witness getPrivateBalance(user: Opaque<"address">): Field {
-  return ledger.privateBalances.get(user);
+// Selective disclosure - user's explicit choice
+export circuit revealData(): Bytes<32> {
+  const data = privateData.value;
+  return disclose(data);
 }
 `,
 
   "midnight://code/patterns/access-control": `// Access Control Pattern
 // Implementing permissions and authorization
+// Updated for Compact 0.16-0.18 syntax
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
 
-ledger {
-  // Role definitions
-  owner: Opaque<"address">;
-  admins: Set<Opaque<"address">>;
+import CompactStandardLibrary;
 
-  // Access-controlled state
-  sensitiveData: Field;
+// Owner stored as public key hash
+export ledger owner: Bytes<32>;
+export ledger adminCount: Counter;
+export ledger isInitialized: Boolean;
 
-  @private
-  adminKeys: Map<Opaque<"address">, Bytes<32>>;
+// Track sequence for derived keys
+export ledger accessSequence: Counter;
+
+// Witness to get the caller's secret key
+witness getCallerSecretKey(): Bytes<32>;
+
+// Derive a public key from secret key and sequence
+export circuit derivePublicKey(sk: Bytes<32>, seq: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "access:pk:"), seq, sk]);
 }
 
-// Witness to get caller identity
-witness getCaller(): Opaque<"address"> {
-  return getCurrentCaller();
+// Only owner can call - prove ownership with ZKP
+export circuit onlyOwnerAction(newOwner: Bytes<32>): [] {
+  const callerPK = derivePublicKey(getCallerSecretKey(), accessSequence as Field as Bytes<32>);
+  assert(callerPK == owner, "Not owner");
+  owner = disclose(newOwner);
 }
 
-// Only owner can call
-export circuit onlyOwnerAction(newValue: Field): Void {
-  const caller = getCaller();
-  assert(caller == ledger.owner, "Not owner");
-
-  ledger.sensitiveData = newValue;
-}
-
-// Only admins can call
-export circuit onlyAdminAction(data: Field): Void {
-  const caller = getCaller();
-  assert(ledger.admins.contains(caller), "Not admin");
-
-  // Admin action here
-}
-
-// Multi-sig pattern (require multiple approvals)
-witness getApprovalCount(action: Bytes<32>): Field {
-  return countApprovals(action);
-}
-
-export circuit requireMultisig(action: Bytes<32>, threshold: Field): Boolean {
-  const approvals = getApprovalCount(action);
-  assert(approvals >= threshold, "Insufficient approvals");
-  return true;
-}
-
-// Time-locked action
-witness getCurrentTime(): Field {
-  return getBlockTimestamp();
-}
-
-export circuit timeLockedAction(unlockTime: Field): Void {
-  const currentTime = getCurrentTime();
-  assert(currentTime >= unlockTime, "Action is timelocked");
-
-  // Perform action
+// Initialize the contract (can only be called once)
+export circuit initialize(ownerPK: Bytes<32>): [] {
+  assert(!isInitialized, "Already initialized");
+  owner = disclose(ownerPK);
+  isInitialized = disclose(true);
+  accessSequence.increment(1);
 }
 `,
 
   "midnight://code/patterns/privacy-preserving": `// Privacy-Preserving Patterns
 // Techniques for maintaining privacy in smart contracts
+// Based on Module 7 Security Best Practices
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
 
-ledger {
-  // Commitment-based private balance
-  balanceCommitments: Map<Opaque<"address">, Field>;
-
-  // Nullifier set (prevents double-spending)
-  nullifiers: Set<Field>;
-
-  @private
-  secretBalances: Map<Opaque<"address">, Field>;
-
-  @private
-  secretNonces: Map<Opaque<"address">, Field>;
-}
+import CompactStandardLibrary;
 
 // PATTERN 1: Commitment Scheme
-// Store commitments instead of values
+// Store commitments instead of actual values
+export ledger commitments: Set<Bytes<32>>;
+export ledger nullifiers: Set<Bytes<32>>;
+export ledger commitmentSequence: Counter;
 
-export circuit deposit(
-  user: Opaque<"address">,
-  amount: Field,
-  nonce: Field
-): Field {
-  // Create commitment: hash(amount, nonce, user)
-  const commitment = hash(amount, nonce, user);
+// Witness to access private data off-chain
+witness getPrivateAmount(): Field;
+witness getPrivateNonce(): Bytes<32>;
 
-  // Store commitment (hides amount)
-  ledger.balanceCommitments.insert(user, commitment);
+// Create a commitment hiding the actual amount
+export circuit createCommitment(): Bytes<32> {
+  const amount = getPrivateAmount();
+  const nonce = getPrivateNonce();
 
+  // commitment = hash(amount || nonce)
+  const commitment = persistentHash<Vector<2, Bytes<32>>>([
+    amount as Bytes<32>,
+    nonce
+  ]);
+
+  commitments = commitments.add(disclose(commitment));
+  commitmentSequence.increment(1);
   return commitment;
 }
 
-export circuit proveBalance(
-  user: Opaque<"address">,
-  amount: Field,
-  nonce: Field,
-  minBalance: Field
-): Boolean {
-  // Verify commitment
-  const expectedCommitment = hash(amount, nonce, user);
-  assert(ledger.balanceCommitments.get(user) == expectedCommitment);
-
-  // Prove property without revealing value
-  assert(amount >= minBalance);
-  return true;
-}
-
 // PATTERN 2: Nullifiers (Prevent Double-Spending)
+// Each commitment can only be spent once
 
-witness generateNullifier(secret: Bytes<32>, action: Field): Field {
-  return hash(secret, action);
+witness getSecretKey(): Bytes<32>;
+
+export circuit createNullifier(commitmentHash: Bytes<32>): Bytes<32> {
+  const sk = getSecretKey();
+
+  // nullifier = hash(sk || commitment)
+  const nullifier = persistentHash<Vector<2, Bytes<32>>>([sk, commitmentHash]);
+
+  // Check not already spent
+  assert(!nullifiers.has(nullifier), "Already spent");
+
+  // Mark as spent
+  nullifiers = nullifiers.add(disclose(nullifier));
+
+  return nullifier;
 }
 
-export circuit spendOnce(
-  secret: Bytes<32>,
-  action: Field
-): Void {
-  const nullifier = generateNullifier(secret, action);
-
-  // Check nullifier hasn't been used
-  assert(!ledger.nullifiers.contains(nullifier), "Already spent");
-
-  // Mark as used
-  ledger.nullifiers.add(nullifier);
-
-  // Perform action
+// PATTERN 3: Range Proofs (prove value in range without revealing)
+export circuit proveInRange(min: Field, max: Field): [] {
+  const value = getPrivateAmount();
+  assert(value >= min, "Value below minimum");
+  assert(value <= max, "Value above maximum");
+  // The assertion proves the property without disclosing value
 }
 
-// PATTERN 3: Range Proofs
-
-export circuit proveInRange(
-  @private value: Field,
-  min: Field,
-  max: Field
-): Boolean {
-  // Prove value is in range without revealing it
-  assert(value >= min);
-  assert(value <= max);
-  return true;
-}
-
-// PATTERN 4: Private Set Membership
-
-export circuit proveMembership(
-  @private element: Field,
-  setRoot: Field,
-  @private proof: Array<Field>
-): Boolean {
-  // Prove element is in set without revealing which element
-  const computedRoot = computeMerkleRoot(element, proof);
-  assert(computedRoot == setRoot);
-  return true;
-}
-
-witness computeMerkleRoot(element: Field, proof: Array<Field>): Field {
-  // Compute Merkle root from element and proof
-  return merkleCompute(element, proof);
+// PATTERN 4: Least Disclosure Principle
+// Only reveal what's absolutely necessary
+export circuit proveEligibility(threshold: Field): Boolean {
+  const amount = getPrivateAmount();
+  // Don't reveal exact amount, just prove >= threshold
+  return amount >= threshold;
 }
 `,
 
   "midnight://code/templates/token": `// Privacy-Preserving Token Template
 // Starter template for token contracts with privacy features
+// Updated for Compact 0.16-0.18
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
 
-ledger {
+import CompactStandardLibrary;
   // Public token metadata
   name: Opaque<"string">;
   symbol: Opaque<"string">;
@@ -695,45 +635,12 @@ export circuit reveal(value: Field, randomness: Field): Field {
 }
 `,
 
-  "midnight://code/examples/simple-counter": `// Simple Counter Contract
-// Minimal example for learning Compact basics
-
-include "std";
-
-// Ledger state - stored on chain
-ledger {
-  counter: Counter;
-}
-
-// Increment the counter by 1
-export circuit increment(): Field {
-  ledger.counter.increment(1);
-  return ledger.counter.value();
-}
-
-// Decrement the counter by 1
-export circuit decrement(): Field {
-  assert(ledger.counter.value() > 0, "Cannot go below zero");
-  ledger.counter.decrement(1);
-  return ledger.counter.value();
-}
-
-// Get current value
-export circuit get(): Field {
-  return ledger.counter.value();
-}
-
-// Reset to zero (add access control in real apps)
-export circuit reset(): Void {
-  const current = ledger.counter.value();
-  ledger.counter.decrement(current);
-}
-`,
-
   "midnight://code/templates/basic": `// Basic Compact Contract Template
-// Starting point for new contracts
+// Starting point for new contracts - Updated for Compact 0.16-0.18
 
-include "std";
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
 
 // ============================================
 // LEDGER STATE
@@ -1191,7 +1098,9 @@ const nextConfig: NextConfig = {
   // Optimize for Midnight SDK
   experimental: {
     serverComponentsExternalPackages: [
-      "@midnight-ntwrk/compact-compiler"
+      "@midnight-ntwrk/compact-js",
+      "@midnight-ntwrk/compact-runtime",
+      "@midnight-ntwrk/ledger"
     ],
   },
 };
@@ -1209,10 +1118,11 @@ export default nextConfig;
 //     "contracts:compile": "compactc src/main.compact -o dist"
 //   },
 //   "dependencies": {
-//     "@midnight-ntwrk/compact-runtime": "^0.16.0"
+//     "@midnight-ntwrk/compact-runtime": "^0.9.0"
 //   },
 //   "devDependencies": {
-//     "@midnight-ntwrk/compact-compiler": "^0.16.0",
+//     "@midnight-ntwrk/compact-js": "^2.3.0",
+//     "@midnight-ntwrk/compact-js-command": "^2.3.0",
 //     "typescript": "^5.4.0"
 //   }
 // }
@@ -1765,10 +1675,10 @@ packages/relay-node/
 \`\`\`typescript
 // packages/relay-node/src/relay.ts
 import {
-  MidnightClient,
+  MidnightProvider,
   Transaction,
   TransactionStatus,
-} from "@midnight-ntwrk/midnight-js-client";
+} from "@midnight-ntwrk/midnight-js-contracts";
 
 export interface RelayConfig {
   nodeUrl: string;
@@ -1882,7 +1792,7 @@ export class MidnightRelay {
 
 \`\`\`typescript
 // packages/relay-node/src/fees.ts
-import { MidnightClient, Transaction } from "@midnight-ntwrk/midnight-js-client";
+import { MidnightProvider, Transaction } from "@midnight-ntwrk/midnight-js-contracts";
 
 export interface FeeEstimate {
   baseFee: bigint;
@@ -1892,7 +1802,7 @@ export interface FeeEstimate {
 }
 
 export async function estimateFees(
-  client: MidnightClient,
+  provider: MidnightProvider,
   tx: Transaction
 ): Promise<FeeEstimate> {
   const gasEstimate = await client.estimateGas(tx);
@@ -1926,7 +1836,9 @@ export async function estimateFees(
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@midnight-ntwrk/midnight-js-client": "^0.16.0"
+    "@midnight-ntwrk/midnight-js-contracts": "^2.1.0",
+    "@midnight-ntwrk/midnight-js-types": "^2.1.0",
+    "@midnight-ntwrk/midnight-js-utils": "^2.1.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

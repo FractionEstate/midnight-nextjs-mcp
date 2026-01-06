@@ -654,16 +654,18 @@ ${projectName}/
 ## Implementation Requirements
 
 ### 1. Midnight SDK Integration (packages/contracts)
-- Use \`@midnight-ntwrk/compact-compiler\` for compiling
-- Use \`@midnight-ntwrk/midnight-js\` for runtime
-- Use \`@midnight-ntwrk/dapp-connector-api\` for wallet
+- Use \`@midnight-ntwrk/compact-js\` (v2.3.0) for TypeScript execution
+- Use \`@midnight-ntwrk/compact-js-command\` (v2.3.0) for CLI tools
+- Use \`@midnight-ntwrk/compact-runtime\` (v0.9.0) for runtime
+- Use \`@midnight-ntwrk/midnight-js-contracts\` (v2.1.0) for contract interactions
+- Use \`@midnight-ntwrk/dapp-connector-api\` (v3.0.0) for wallet
 
 ### 2. Next.js 16+ Configuration (apps/web)
 - Enable App Router with server components
 - Use \`"use client"\` boundary for wallet interactions
 - Implement proper Suspense boundaries for async operations
 - Configure \`next.config.ts\` with:
-  - \`transpilePackages: ["@${projectName}/contracts", "@${projectName}/shared"]\`
+  - \`transpilePackages: ["@\${projectName}/contracts", "@\${projectName}/shared"]\`
   - WebAssembly support for ZK provers
 
 ### 3. Wallet Integration Pattern
@@ -770,15 +772,21 @@ For the best development experience, use **both** MCP servers:
 ### Key Commands
 \`\`\`bash
 # Initialize turbo monorepo
-pnpm create turbo@latest ${projectName}
+pnpm create turbo@latest \${projectName}
 
-# Add Midnight packages
+# Add Midnight packages (latest versions)
 cd packages/contracts
-pnpm add @midnight-ntwrk/compact-compiler @midnight-ntwrk/midnight-js
+pnpm add @midnight-ntwrk/compact-runtime@^0.9.0
+pnpm add -D @midnight-ntwrk/compact-js@^2.3.0 @midnight-ntwrk/compact-js-command@^2.3.0
 
-# Add Next.js frontend
+# Add SDK packages
+pnpm add @midnight-ntwrk/midnight-js-contracts@^2.1.0
+pnpm add @midnight-ntwrk/midnight-js-types@^2.1.0
+
+# Add Next.js frontend wallet integration
 cd apps/web
-pnpm add @midnight-ntwrk/dapp-connector-api
+pnpm add @midnight-ntwrk/dapp-connector-api@^3.0.0
+pnpm add @midnight-ntwrk/wallet-api@^5.0.0
 
 # Development
 pnpm dev              # Run all apps

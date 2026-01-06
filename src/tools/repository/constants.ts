@@ -106,6 +106,18 @@ export const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   awesome: { owner: "midnightntwrk", repo: "midnight-awesome-dapps" },
   "contributor-hub": { owner: "midnightntwrk", repo: "contributor-hub" },
 
+  // Templates & CI/CD
+  "midnight-template-repo": {
+    owner: "midnightntwrk",
+    repo: "midnight-template-repo",
+  },
+  template: { owner: "midnightntwrk", repo: "midnight-template-repo" },
+  "upload-sarif-github-action": {
+    owner: "midnightntwrk",
+    repo: "upload-sarif-github-action",
+  },
+  sarif: { owner: "midnightntwrk", repo: "upload-sarif-github-action" },
+
   // Partner Libraries (OpenZeppelin)
   "compact-contracts": { owner: "OpenZeppelin", repo: "compact-contracts" },
   openzeppelin: { owner: "OpenZeppelin", repo: "compact-contracts" },

@@ -73,6 +73,20 @@ export const documentationResources: ResourceDefinition[] = [
       "Troubleshooting guide: compiler errors, SDK errors, deployment issues with fixes",
     mimeType: "text/markdown",
   },
+  {
+    uri: "midnight://docs/security-best-practices",
+    name: "Security Best Practices",
+    description:
+      "Module 7: ZKP patterns, explicit disclosure, least disclosure principle, testing",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "midnight://docs/developer-tools",
+    name: "Developer Tools Reference",
+    description:
+      "Compact compiler (compactc) usage, VS Code extension, build scripts, and workflow",
+    mimeType: "text/markdown",
+  },
 ];
 
 /**
