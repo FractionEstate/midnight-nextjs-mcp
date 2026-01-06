@@ -11,9 +11,15 @@ export const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   js: { owner: "midnightntwrk", repo: "midnight-js" },
   sdk: { owner: "midnightntwrk", repo: "midnight-js" },
 
-  // Documentation
+  // Documentation & Governance
   docs: { owner: "midnightntwrk", repo: "midnight-docs" },
   "midnight-docs": { owner: "midnightntwrk", repo: "midnight-docs" },
+  "midnight-improvement-proposals": {
+    owner: "midnightntwrk",
+    repo: "midnight-improvement-proposals",
+  },
+  mips: { owner: "midnightntwrk", repo: "midnight-improvement-proposals" },
+  proposals: { owner: "midnightntwrk", repo: "midnight-improvement-proposals" },
 
   // Example DApps
   "example-counter": { owner: "midnightntwrk", repo: "example-counter" },
@@ -28,14 +34,37 @@ export const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   "midnight-wallet": { owner: "midnightntwrk", repo: "midnight-wallet" },
   wallet: { owner: "midnightntwrk", repo: "midnight-wallet" },
 
-  // Infrastructure
+  // Core Infrastructure (Rust)
+  "midnight-node": { owner: "midnightntwrk", repo: "midnight-node" },
+  "midnight-ledger": { owner: "midnightntwrk", repo: "midnight-ledger" },
+  ledger: { owner: "midnightntwrk", repo: "midnight-ledger" },
   "midnight-indexer": { owner: "midnightntwrk", repo: "midnight-indexer" },
   indexer: { owner: "midnightntwrk", repo: "midnight-indexer" },
   "midnight-node-docker": {
     owner: "midnightntwrk",
     repo: "midnight-node-docker",
   },
-  node: { owner: "midnightntwrk", repo: "midnight-node-docker" },
+  "node-docker": { owner: "midnightntwrk", repo: "midnight-node-docker" },
+
+  // ZK & Cryptography
+  "midnight-zk": { owner: "midnightntwrk", repo: "midnight-zk" },
+  zk: { owner: "midnightntwrk", repo: "midnight-zk" },
+  "midnight-trusted-setup": {
+    owner: "midnightntwrk",
+    repo: "midnight-trusted-setup",
+  },
+  "trusted-setup": { owner: "midnightntwrk", repo: "midnight-trusted-setup" },
+  halo2: { owner: "midnightntwrk", repo: "halo2" },
+
+  // Token Distribution
+  "night-token-distribution": {
+    owner: "midnightntwrk",
+    repo: "night-token-distribution",
+  },
+  "token-distribution": {
+    owner: "midnightntwrk",
+    repo: "night-token-distribution",
+  },
 
   // APIs & Connectors
   "midnight-dapp-connector-api": {
@@ -44,12 +73,14 @@ export const REPO_ALIASES: Record<string, { owner: string; repo: string }> = {
   },
   connector: { owner: "midnightntwrk", repo: "midnight-dapp-connector-api" },
 
-  // Tooling
+  // Tooling & Editor Extensions
   "compact-tree-sitter": {
     owner: "midnightntwrk",
     repo: "compact-tree-sitter",
   },
   "tree-sitter": { owner: "midnightntwrk", repo: "compact-tree-sitter" },
+  "compact-zed": { owner: "midnightntwrk", repo: "compact-zed" },
+  zed: { owner: "midnightntwrk", repo: "compact-zed" },
   "setup-compact-action": {
     owner: "midnightntwrk",
     repo: "setup-compact-action",
