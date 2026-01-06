@@ -123,7 +123,7 @@ All tools are prefixed with `midnight-` (e.g., `midnight-search-compact`).
 
 | Capability      | Feature                                         |
 | --------------- | ----------------------------------------------- |
-| **Tools**       | 27 tools with `listChanged` notifications       |
+| **Tools**       | 28 tools with `listChanged` notifications       |
 | **Resources**   | 9 embedded resources with subscription support  |
 | **Prompts**     | 5 workflow prompts                              |
 | **Logging**     | Client-controllable log level                   |
