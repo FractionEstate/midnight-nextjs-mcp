@@ -59,6 +59,18 @@ describe("Documentation Resources", () => {
     expect(content).toContain("--skip-zk");
     expect(content).toContain("problemMatcher");
   });
+
+  it("should get SDK versions documentation", async () => {
+    const content = await getDocumentation("midnight://docs/sdk-versions");
+
+    expect(content).toBeTruthy();
+    expect(content).toContain("@midnight-ntwrk/midnight-js-contracts");
+    expect(content).toContain("^2.1.0");
+    expect(content).toContain("@midnight-ntwrk/compact-js");
+    expect(content).toContain("^2.3.0");
+    expect(content).toContain("@midnight-ntwrk/wallet-api");
+    expect(content).toContain("^5.0.0");
+  });
 });
 
 describe("Code Resources", () => {

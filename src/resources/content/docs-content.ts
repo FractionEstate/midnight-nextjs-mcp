@@ -1669,4 +1669,156 @@ compactc --skip-zk src/contract.compact build/
 
 Ensure you're using \`--vscode\` flag and have problem matchers configured in \`tasks.json\`.
 `,
+
+  // SDK Package Versions Reference
+  "midnight://docs/sdk-versions": `# @midnight-ntwrk Package Versions Reference
+
+> **Last Updated**: January 2026
+> Always check npm for the absolute latest versions.
+
+## Core SDK Packages (v2.1.0)
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| \`@midnight-ntwrk/midnight-js-contracts\` | **^2.1.0** | Contract deployment and interaction |
+| \`@midnight-ntwrk/midnight-js-types\` | **^2.1.0** | Shared TypeScript types |
+| \`@midnight-ntwrk/midnight-js-utils\` | **^2.1.0** | Utility functions |
+| \`@midnight-ntwrk/midnight-js-network-id\` | **^2.1.0** | Network ID configuration |
+| \`@midnight-ntwrk/platform-js\` | **^2.1.0** | Platform abstractions |
+
+## Compact/Compiler Packages
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| \`@midnight-ntwrk/compact-js\` | **^2.3.0** | TypeScript execution environment |
+| \`@midnight-ntwrk/compact-js-command\` | **^2.3.0** | CLI utilities |
+| \`@midnight-ntwrk/compact-runtime\` | **^0.9.0** | Runtime library |
+
+## Provider Packages (v2.1.0)
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| \`@midnight-ntwrk/midnight-js-http-client-proof-provider\` | **^2.1.0** | Proof server client |
+| \`@midnight-ntwrk/midnight-js-indexer-public-data-provider\` | **^2.1.0** | Indexer client |
+| \`@midnight-ntwrk/midnight-js-level-private-state-provider\` | **^2.1.0** | LevelDB state |
+| \`@midnight-ntwrk/midnight-js-node-zk-config-provider\` | **^2.1.0** | Node ZK config |
+| \`@midnight-ntwrk/midnight-js-fetch-zk-config-provider\` | **^2.1.0** | Fetch ZK config |
+| \`@midnight-ntwrk/midnight-js-logger-provider\` | **^2.1.0** | Pino logger |
+
+## Wallet Packages
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| \`@midnight-ntwrk/wallet\` | **^5.0.0** | Wallet implementation |
+| \`@midnight-ntwrk/wallet-api\` | **^5.0.0** | Wallet interface |
+| \`@midnight-ntwrk/dapp-connector-api\` | **^3.0.0** | DApp connector |
+| \`@midnight-ntwrk/wallet-sdk-address-format\` | **^2.0.0** | Bech32m addresses |
+| \`@midnight-ntwrk/wallet-sdk-hd\` | **^2.0.0** | HD wallet support |
+| \`@midnight-ntwrk/wallet-sdk-capabilities\` | **^2.0.0** | Wallet capabilities |
+
+## Runtime/Ledger Packages
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| \`@midnight-ntwrk/ledger\` | **^4.0.0** | Ledger operations |
+| \`@midnight-ntwrk/zswap\` | **^4.0.0** | Zswap protocol |
+| \`@midnight-ntwrk/onchain-runtime\` | **^0.3.0** | On-chain runtime |
+
+## Testing
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| \`@midnight-ntwrk/midnight-js-testing\` | **^2.0.2** | Testing utilities |
+
+---
+
+## Quick Install Commands
+
+### Minimal Setup (Contract Development)
+\`\`\`bash
+npm install @midnight-ntwrk/compact-runtime@^0.9.0
+npm install -D @midnight-ntwrk/compact-js@^2.3.0 @midnight-ntwrk/compact-js-command@^2.3.0
+\`\`\`
+
+### Full SDK (DApp Development)
+\`\`\`bash
+npm install \\
+  @midnight-ntwrk/midnight-js-contracts@^2.1.0 \\
+  @midnight-ntwrk/midnight-js-types@^2.1.0 \\
+  @midnight-ntwrk/midnight-js-utils@^2.1.0 \\
+  @midnight-ntwrk/dapp-connector-api@^3.0.0 \\
+  @midnight-ntwrk/wallet-api@^5.0.0 \\
+  @midnight-ntwrk/compact-runtime@^0.9.0
+\`\`\`
+
+### With All Providers
+\`\`\`bash
+npm install \\
+  @midnight-ntwrk/midnight-js-http-client-proof-provider@^2.1.0 \\
+  @midnight-ntwrk/midnight-js-indexer-public-data-provider@^2.1.0 \\
+  @midnight-ntwrk/midnight-js-level-private-state-provider@^2.1.0 \\
+  @midnight-ntwrk/midnight-js-node-zk-config-provider@^2.1.0
+\`\`\`
+
+---
+
+## Turbo Monorepo package.json Examples
+
+### packages/contracts/package.json
+\`\`\`json
+{
+  "name": "@my-dapp/contracts",
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "^0.9.0"
+  },
+  "devDependencies": {
+    "@midnight-ntwrk/compact-js": "^2.3.0",
+    "@midnight-ntwrk/compact-js-command": "^2.3.0"
+  }
+}
+\`\`\`
+
+### packages/relay-node/package.json
+\`\`\`json
+{
+  "name": "@my-dapp/relay-node",
+  "dependencies": {
+    "@midnight-ntwrk/midnight-js-contracts": "^2.1.0",
+    "@midnight-ntwrk/midnight-js-types": "^2.1.0",
+    "@midnight-ntwrk/midnight-js-utils": "^2.1.0"
+  }
+}
+\`\`\`
+
+### apps/web/package.json
+\`\`\`json
+{
+  "name": "@my-dapp/web",
+  "dependencies": {
+    "@midnight-ntwrk/dapp-connector-api": "^3.0.0",
+    "@midnight-ntwrk/wallet-api": "^5.0.0",
+    "@midnight-ntwrk/midnight-js-contracts": "^2.1.0",
+    "@my-dapp/contracts": "workspace:*",
+    "@my-dapp/relay-node": "workspace:*"
+  }
+}
+\`\`\`
+
+---
+
+## Beta/RC Packages (Next-Gen Wallet SDK)
+
+These packages are in active development:
+
+| Package | Version | Status |
+|---------|---------|--------|
+| \`@midnight-ntwrk/wallet-sdk-facade\` | 1.0.0-beta.13 | Beta |
+| \`@midnight-ntwrk/wallet-sdk-shielded\` | 1.0.0-beta.11 | Beta |
+| \`@midnight-ntwrk/wallet-sdk-runtime\` | 1.0.0-beta.9 | Beta |
+| \`@midnight-ntwrk/ledger-v6\` | 6.2.0-rc.3 | RC |
+| \`@midnight-ntwrk/ledger-v7\` | 7.0.0-alpha.1 | Alpha |
+
+> **Note**: Use beta/RC packages only for testing new features, not production.
+`,
 };
+

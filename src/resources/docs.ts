@@ -87,6 +87,13 @@ export const documentationResources: ResourceDefinition[] = [
       "Compact compiler (compactc) usage, VS Code extension, build scripts, and workflow",
     mimeType: "text/markdown",
   },
+  {
+    uri: "midnight://docs/sdk-versions",
+    name: "SDK Package Versions",
+    description:
+      "Latest @midnight-ntwrk npm package versions with install commands for turbo monorepos",
+    mimeType: "text/markdown",
+  },
 ];
 
 /**
