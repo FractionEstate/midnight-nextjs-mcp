@@ -122,6 +122,28 @@ export const codeResources: ResourceDefinition[] = [
       "Breaking changes and migration steps for Next.js 16 with Midnight dApps",
     mimeType: "text/markdown",
   },
+  // Infrastructure Resources
+  {
+    uri: "midnight://code/infrastructure/backend-node",
+    name: "Midnight Backend Node",
+    description:
+      "Local development node configuration - Docker, config.toml, genesis setup (LOCAL ONLY)",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "midnight://code/infrastructure/relay-node",
+    name: "Relay Node Implementation",
+    description:
+      "Transaction relay service for dApp frontends - MidnightRelay class, fee estimation, queue management",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "midnight://code/infrastructure/turbo-monorepo-complete",
+    name: "Complete Turbo Monorepo",
+    description:
+      "Full production-ready monorepo structure with apps/web, midnight-backend, packages/relay-node, contracts, shared",
+    mimeType: "text/markdown",
+  },
 ];
 
 /**

@@ -305,18 +305,59 @@ my-dapp/
 ├── apps/
 │   └── web/                    # Next.js 16+ frontend
 │       ├── app/
-│       └── lib/midnight/       # SDK integration
+│       │   ├── layout.tsx      # Root layout with providers
+│       │   ├── page.tsx        # Landing page
+│       │   └── dapp/           # Protected dApp routes
+│       ├── components/
+│       │   ├── providers/      # MidnightProvider, WalletProvider
+│       │   └── ui/             # shadcn/ui components
+│       └── lib/
+│           ├── midnight/       # SDK integration
+│           └── hooks/          # useWallet, useContract hooks
+├── midnight-backend/           # ⚠️ LOCAL ONLY - Do not deploy
+│   ├── node/                   # Block producer node
+│   │   ├── config.toml         # Node configuration
+│   │   └── docker-compose.yml  # Local node setup
+│   └── wallet/                 # Backend wallets
+│       ├── proving-server/     # ZK proving service
+│       └── indexer/            # Transaction indexer
 ├── packages/
+│   ├── relay-node/             # Relay node for transaction relay
+│   │   ├── src/
+│   │   │   └── relay.ts        # Relay implementation
+│   │   └── package.json
 │   ├── contracts/              # Compact smart contracts
+│   │   ├── src/
+│   │   │   └── main.compact    # Main contract
+│   │   ├── test/
+│   │   └── package.json
 │   └── shared/                 # Shared types & utilities
+│       ├── src/
+│       │   ├── types.ts
+│       │   └── constants.ts
+│       └── package.json
 ├── turbo.json
-└── pnpm-workspace.yaml
+├── pnpm-workspace.yaml
+└── .env.local                  # Local environment variables
 ```
+
+### Architecture Components
+
+| Component | Purpose | Environment |
+|-----------|---------|-------------|
+| `apps/web` | Next.js 16+ frontend with wallet UI | Production |
+| `midnight-backend/node` | Block producer for local dev | **Local only** |
+| `midnight-backend/wallet` | Backend proving & indexing | **Local only** |
+| `packages/relay-node` | Transaction relay service | Production |
+| `packages/contracts` | Compact smart contracts | Production |
+| `packages/shared` | Types, constants, utilities | Production |
 
 ### Key Integration Patterns
 
 1. **Wallet Provider**: Wrap app with `MidnightProvider` from the resource
 2. **Contract Hooks**: Use `useContract<T>()` for type-safe interactions
 3. **WebAssembly**: Configure `next.config.ts` for ZK provers
+4. **Relay Node**: Use `packages/relay-node` for transaction submission
+5. **Local Development**: Start `midnight-backend/` services for local testing
 4. **Transpilation**: Add workspace packages to `transpilePackages`
 5. **Cache Components**: Use public caches for contract state, private for wallet

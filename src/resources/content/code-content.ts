@@ -1598,4 +1598,575 @@ Use with nextjs-nextjs-index and nextjs-nextjs-call tools.
 7. ✅ Build passes without errors
 8. ✅ Runtime behavior unchanged
 `,
+
+  // Backend and Infrastructure Resources
+  "midnight://code/infrastructure/backend-node": `// Midnight Backend Node Configuration
+// Local development node setup - DO NOT DEPLOY TO PRODUCTION
+
+## Overview
+
+The midnight-backend directory contains local-only infrastructure for development:
+- Block producer node for local blockchain
+- Proving server for ZK proofs
+- Indexer for transaction tracking
+
+## Directory Structure
+
+\`\`\`
+midnight-backend/           # ⚠️ LOCAL ONLY - Do not deploy
+├── node/                   # Block producer node
+│   ├── config.toml         # Node configuration
+│   ├── docker-compose.yml  # Local node setup
+│   └── genesis.json        # Genesis block configuration
+└── wallet/                 # Backend wallets
+    ├── proving-server/     # ZK proving service
+    │   ├── Dockerfile
+    │   └── config.yaml
+    └── indexer/            # Transaction indexer
+        ├── Dockerfile
+        └── config.yaml
+\`\`\`
+
+## Node Configuration (config.toml)
+
+\`\`\`toml
+# midnight-backend/node/config.toml
+[network]
+chain_id = "midnight-local"
+listen_addr = "0.0.0.0:9944"
+rpc_addr = "0.0.0.0:9933"
+
+[consensus]
+block_time = 6  # seconds
+validators = 1
+
+[storage]
+path = "./data"
+pruning = "archive"
+
+[logging]
+level = "info"
+format = "json"
+\`\`\`
+
+## Docker Compose Setup
+
+\`\`\`yaml
+# midnight-backend/node/docker-compose.yml
+version: '3.8'
+
+services:
+  midnight-node:
+    image: midnightntwrk/midnight-node:latest
+    container_name: midnight-local-node
+    ports:
+      - "9944:9944"  # WebSocket
+      - "9933:9933"  # RPC
+    volumes:
+      - ./config.toml:/etc/midnight/config.toml
+      - ./data:/var/lib/midnight
+    environment:
+      - RUST_LOG=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9933/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  proving-server:
+    image: midnightntwrk/proving-server:latest
+    container_name: midnight-proving
+    ports:
+      - "8080:8080"
+    depends_on:
+      - midnight-node
+    environment:
+      - NODE_URL=ws://midnight-node:9944
+      - PROOF_LEVEL=development
+
+  indexer:
+    image: midnightntwrk/indexer:latest
+    container_name: midnight-indexer
+    ports:
+      - "8081:8081"
+    depends_on:
+      - midnight-node
+    environment:
+      - NODE_URL=ws://midnight-node:9944
+      - DATABASE_URL=sqlite:./data/indexer.db
+\`\`\`
+
+## Starting Local Development
+
+\`\`\`bash
+# Start all backend services
+cd midnight-backend/node
+docker-compose up -d
+
+# Check node health
+curl http://localhost:9933/health
+
+# View logs
+docker-compose logs -f midnight-node
+\`\`\`
+
+## Environment Variables for Frontend
+
+\`\`\`bash
+# .env.local
+NEXT_PUBLIC_MIDNIGHT_NODE_URL=ws://localhost:9944
+NEXT_PUBLIC_PROVING_SERVER_URL=http://localhost:8080
+NEXT_PUBLIC_INDEXER_URL=http://localhost:8081
+\`\`\`
+
+## ⚠️ Important Notes
+
+1. **Never deploy midnight-backend to production**
+   - It's for local development only
+   - Production uses Midnight mainnet/testnet
+
+2. **Genesis accounts**
+   - Local node includes pre-funded test accounts
+   - Keys are in genesis.json (never use in production!)
+
+3. **Data persistence**
+   - Data stored in ./data directory
+   - Remove to reset local blockchain state
+`,
+
+  "midnight://code/infrastructure/relay-node": `// Midnight Relay Node Implementation
+// Transaction relay service for dApp frontends
+
+## Overview
+
+The relay node handles:
+- Transaction submission to the Midnight network
+- Fee estimation and gas management
+- Transaction status tracking
+- Retry logic for failed submissions
+
+## Directory Structure
+
+\`\`\`
+packages/relay-node/
+├── src/
+│   ├── index.ts           # Entry point and exports
+│   ├── relay.ts           # Core relay implementation
+│   ├── fees.ts            # Fee estimation
+│   ├── queue.ts           # Transaction queue
+│   └── types.ts           # Type definitions
+├── package.json
+├── tsconfig.json
+└── README.md
+\`\`\`
+
+## Core Implementation
+
+\`\`\`typescript
+// packages/relay-node/src/relay.ts
+import {
+  MidnightClient,
+  Transaction,
+  TransactionStatus,
+} from "@midnight-ntwrk/midnight-js-client";
+
+export interface RelayConfig {
+  nodeUrl: string;
+  maxRetries?: number;
+  retryDelay?: number;
+  maxQueueSize?: number;
+}
+
+export interface SubmitResult {
+  txHash: string;
+  status: TransactionStatus;
+  blockHash?: string;
+  error?: string;
+}
+
+export class MidnightRelay {
+  private client: MidnightClient;
+  private config: Required<RelayConfig>;
+  private queue: Map<string, Transaction> = new Map();
+
+  constructor(config: RelayConfig) {
+    this.config = {
+      maxRetries: 3,
+      retryDelay: 1000,
+      maxQueueSize: 100,
+      ...config,
+    };
+    this.client = new MidnightClient(config.nodeUrl);
+  }
+
+  async connect(): Promise<void> {
+    await this.client.connect();
+    console.log("Relay connected to", this.config.nodeUrl);
+  }
+
+  async disconnect(): Promise<void> {
+    await this.client.disconnect();
+    this.queue.clear();
+  }
+
+  async submitTransaction(tx: Transaction): Promise<SubmitResult> {
+    if (this.queue.size >= this.config.maxQueueSize) {
+      throw new Error("Transaction queue is full");
+    }
+
+    const txHash = tx.hash();
+    this.queue.set(txHash, tx);
+
+    try {
+      const result = await this.submitWithRetry(tx);
+      this.queue.delete(txHash);
+      return result;
+    } catch (error) {
+      this.queue.delete(txHash);
+      throw error;
+    }
+  }
+
+  private async submitWithRetry(tx: Transaction): Promise<SubmitResult> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt < this.config.maxRetries; attempt++) {
+      try {
+        const result = await this.client.submitTransaction(tx);
+        return {
+          txHash: tx.hash(),
+          status: result.status,
+          blockHash: result.blockHash,
+        };
+      } catch (error) {
+        lastError = error as Error;
+        if (this.isRetryable(error)) {
+          await this.delay(this.config.retryDelay * (attempt + 1));
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return {
+      txHash: tx.hash(),
+      status: "failed",
+      error: lastError?.message,
+    };
+  }
+
+  private isRetryable(error: unknown): boolean {
+    const message = (error as Error).message?.toLowerCase() || "";
+    return (
+      message.includes("timeout") ||
+      message.includes("connection") ||
+      message.includes("temporary")
+    );
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  getQueueSize(): number {
+    return this.queue.size;
+  }
+
+  getQueuedTransactions(): string[] {
+    return Array.from(this.queue.keys());
+  }
+}
+\`\`\`
+
+## Fee Estimation
+
+\`\`\`typescript
+// packages/relay-node/src/fees.ts
+import { MidnightClient, Transaction } from "@midnight-ntwrk/midnight-js-client";
+
+export interface FeeEstimate {
+  baseFee: bigint;
+  priorityFee: bigint;
+  totalFee: bigint;
+  gasLimit: bigint;
+}
+
+export async function estimateFees(
+  client: MidnightClient,
+  tx: Transaction
+): Promise<FeeEstimate> {
+  const gasEstimate = await client.estimateGas(tx);
+  const feeData = await client.getFeeData();
+
+  const baseFee = feeData.baseFeePerGas ?? BigInt(0);
+  const priorityFee = feeData.maxPriorityFeePerGas ?? BigInt(0);
+  const gasLimit = gasEstimate * BigInt(120) / BigInt(100); // 20% buffer
+
+  return {
+    baseFee,
+    priorityFee,
+    totalFee: (baseFee + priorityFee) * gasLimit,
+    gasLimit,
+  };
+}
+\`\`\`
+
+## Package Configuration
+
+\`\`\`json
+// packages/relay-node/package.json
+{
+  "name": "@midnight-dapp/relay-node",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/midnight-js-client": "^0.16.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
+\`\`\`
+
+## Usage in Next.js App
+
+\`\`\`typescript
+// apps/web/lib/midnight/relay.ts
+import { MidnightRelay } from "@midnight-dapp/relay-node";
+
+let relay: MidnightRelay | null = null;
+
+export async function getRelay(): Promise<MidnightRelay> {
+  if (!relay) {
+    relay = new MidnightRelay({
+      nodeUrl: process.env.NEXT_PUBLIC_MIDNIGHT_NODE_URL!,
+      maxRetries: 3,
+    });
+    await relay.connect();
+  }
+  return relay;
+}
+
+// In a Server Action
+"use server";
+import { getRelay } from "@/lib/midnight/relay";
+
+export async function submitContractCall(txData: string) {
+  const relay = await getRelay();
+  const result = await relay.submitTransaction(JSON.parse(txData));
+  return result;
+}
+\`\`\`
+`,
+
+  "midnight://code/infrastructure/turbo-monorepo-complete": `// Complete Turbo Monorepo Structure for Midnight + Next.js
+// Production-ready project scaffold
+
+## Full Directory Structure
+
+\`\`\`
+my-dapp/
+├── apps/
+│   └── web/                        # Next.js 16+ frontend
+│       ├── app/
+│       │   ├── layout.tsx          # Root layout with providers
+│       │   ├── page.tsx            # Landing page
+│       │   ├── globals.css
+│       │   └── dapp/               # Protected dApp routes
+│       │       ├── layout.tsx      # dApp layout (auth required)
+│       │       ├── page.tsx        # Dashboard
+│       │       ├── wallet/
+│       │       │   └── page.tsx    # Wallet management
+│       │       └── contracts/
+│       │           ├── page.tsx    # Contract list
+│       │           └── [address]/
+│       │               └── page.tsx # Contract details
+│       ├── components/
+│       │   ├── providers/
+│       │   │   ├── index.tsx       # Export all providers
+│       │   │   ├── midnight-provider.tsx
+│       │   │   └── wallet-provider.tsx
+│       │   └── ui/                 # shadcn/ui components
+│       │       ├── button.tsx
+│       │       ├── card.tsx
+│       │       └── ...
+│       ├── lib/
+│       │   ├── midnight/           # Midnight SDK integration
+│       │   │   ├── client.ts       # MidnightClient singleton
+│       │   │   ├── contracts.ts    # Contract interactions
+│       │   │   └── relay.ts        # Relay node client
+│       │   └── hooks/
+│       │       ├── use-wallet.ts
+│       │       ├── use-contract.ts
+│       │       └── use-contract-state.ts
+│       ├── next.config.ts
+│       ├── package.json
+│       └── tsconfig.json
+│
+├── midnight-backend/               # ⚠️ LOCAL ONLY - Never deploy
+│   ├── node/                       # Block producer node
+│   │   ├── config.toml             # Node configuration
+│   │   ├── docker-compose.yml      # Container orchestration
+│   │   └── genesis.json            # Genesis block (test accounts)
+│   └── wallet/                     # Backend services
+│       ├── proving-server/         # ZK proof generation
+│       │   ├── Dockerfile
+│       │   └── config.yaml
+│       └── indexer/                # Transaction indexer
+│           ├── Dockerfile
+│           └── config.yaml
+│
+├── packages/
+│   ├── relay-node/                 # Transaction relay service
+│   │   ├── src/
+│   │   │   ├── index.ts            # Exports
+│   │   │   ├── relay.ts            # MidnightRelay class
+│   │   │   ├── fees.ts             # Fee estimation
+│   │   │   └── queue.ts            # Transaction queue
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── contracts/                  # Compact smart contracts
+│   │   ├── src/
+│   │   │   ├── main.compact        # Main contract
+│   │   │   └── lib/                # Shared contract libraries
+│   │   │       └── utils.compact
+│   │   ├── test/
+│   │   │   └── main.test.ts        # Contract tests
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── shared/                     # Shared types & utilities
+│       ├── src/
+│       │   ├── index.ts
+│       │   ├── types.ts            # Shared TypeScript types
+│       │   ├── constants.ts        # Network constants
+│       │   └── utils.ts            # Utility functions
+│       ├── package.json
+│       └── tsconfig.json
+│
+├── turbo.json                      # Turbo pipeline configuration
+├── pnpm-workspace.yaml             # Workspace packages
+├── package.json                    # Root package.json
+├── tsconfig.json                   # Base TypeScript config
+├── .env.local                      # Local environment variables
+├── .env.example                    # Environment template
+└── .gitignore
+\`\`\`
+
+## Configuration Files
+
+### turbo.json
+\`\`\`json
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env.local"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"],
+      "env": ["NEXT_PUBLIC_*"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "contracts:compile": {
+      "outputs": ["dist/**"],
+      "inputs": ["src/**/*.compact"]
+    }
+  }
+}
+\`\`\`
+
+### pnpm-workspace.yaml
+\`\`\`yaml
+packages:
+  - "apps/*"
+  - "packages/*"
+\`\`\`
+
+### Root package.json
+\`\`\`json
+{
+  "name": "midnight-dapp",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "contracts:compile": "turbo contracts:compile",
+    "backend:start": "cd midnight-backend/node && docker-compose up -d",
+    "backend:stop": "cd midnight-backend/node && docker-compose down",
+    "backend:logs": "cd midnight-backend/node && docker-compose logs -f"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}
+\`\`\`
+
+## Environment Configuration
+
+### .env.local
+\`\`\`bash
+# Midnight Network (local development)
+NEXT_PUBLIC_MIDNIGHT_NODE_URL=ws://localhost:9944
+NEXT_PUBLIC_PROVING_SERVER_URL=http://localhost:8080
+NEXT_PUBLIC_INDEXER_URL=http://localhost:8081
+
+# For testnet/mainnet, replace with:
+# NEXT_PUBLIC_MIDNIGHT_NODE_URL=wss://rpc.testnet.midnight.network
+
+# Wallet Configuration
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_project_id
+\`\`\`
+
+## Development Workflow
+
+\`\`\`bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Start local Midnight backend
+pnpm backend:start
+
+# 3. Compile contracts
+pnpm contracts:compile
+
+# 4. Start development servers
+pnpm dev
+
+# 5. Access the app
+open http://localhost:3000
+\`\`\`
+
+## Production Deployment
+
+\`\`\`bash
+# Build all packages
+pnpm build
+
+# Deploy web app (Vercel, etc.)
+cd apps/web && vercel deploy
+
+# Note: midnight-backend is NOT deployed
+# Production uses Midnight mainnet/testnet
+\`\`\`
+`,
 };

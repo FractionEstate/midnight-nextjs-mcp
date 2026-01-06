@@ -609,10 +609,23 @@ ${projectName}/
 │       └── lib/
 │           ├── midnight/       # SDK integration
 │           └── hooks/          # useWallet, useContract hooks
+├── midnight-backend/           # ⚠️ LOCAL ONLY - Do not deploy
+│   ├── node/                   # Block producer node
+│   │   ├── config.toml         # Node configuration
+│   │   └── docker-compose.yml  # Local node setup
+│   └── wallet/                 # Backend wallets
+│       ├── proving-server/     # ZK proving service
+│       └── indexer/            # Transaction indexer
 ├── packages/
+│   ├── relay-node/             # Relay node for transaction relay
+│   │   ├── src/
+│   │   │   ├── relay.ts        # Relay implementation
+│   │   │   └── config.ts       # Relay configuration
+│   │   └── package.json
 │   ├── contracts/              # Compact smart contracts
 │   │   ├── src/
 │   │   │   └── main.compact    # Main contract
+│   │   ├── test/               # Contract tests
 │   │   └── package.json
 │   ├── shared/                 # Shared types & utilities
 │   │   ├── src/
@@ -623,8 +636,20 @@ ${projectName}/
 │       └── package.json
 ├── turbo.json
 ├── package.json
-└── pnpm-workspace.yaml
+├── pnpm-workspace.yaml
+└── .env.local                  # Local environment variables
 \`\`\`
+
+### Architecture Components
+
+| Component | Purpose | Environment |
+|-----------|---------|-------------|
+| \`apps/web\` | Next.js 16+ frontend with wallet UI | Production |
+| \`midnight-backend/node\` | Block producer for local dev | **Local only** |
+| \`midnight-backend/wallet\` | Backend proving & indexing | **Local only** |
+| \`packages/relay-node\` | Transaction relay service | Production |
+| \`packages/contracts\` | Compact smart contracts | Production |
+| \`packages/shared\` | Types, constants, utilities | Production |
 
 ## Implementation Requirements
 
