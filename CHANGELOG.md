@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-01-06
+
+### Added
+
+- **Live Documentation Fetching** - New `midnight-fetch-docs` tool for real-time docs
+  - Fetches live content from docs.midnight.network (SSG-powered)
+  - Parses Docusaurus HTML to extract title, content, headings
+  - Optional `extractSection` param to get specific sections by heading
+  - 15KB content truncation for token efficiency
+  - Graceful handling of 404s, timeouts, and network errors
+
+- **Freshness Hint** - `midnight-search-docs` now suggests using `fetch-docs` for guaranteed latest content
+
+### Documentation
+
+- Updated tool count to 28 across README and ARCHITECTURE docs
+- Added 8 previously undocumented tools to ARCHITECTURE.md tools table
+
 ## [0.2.3] - 2026-01-02
 
 ### Added
