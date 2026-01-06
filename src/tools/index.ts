@@ -92,6 +92,10 @@ export {
   isNextDevToolsAvailable,
   nextjsIntegrationTools,
   handleNextJsStatus,
+  getNextJsResources,
+  getNextJsPrompts,
+  readNextJsResource,
+  getNextJsPrompt,
 } from "./nextjs/index.js";
 
 // Re-export types

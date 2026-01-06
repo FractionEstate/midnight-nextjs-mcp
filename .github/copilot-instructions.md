@@ -210,23 +210,60 @@ Key concepts: `ledger` (on-chain state), `circuit` (ZK-proven logic), `witness` 
 
 This MCP server provides comprehensive support for building Next.js dApps with Midnight:
 
-### Bundled next-devtools-mcp
+### Bundled next-devtools-mcp (v0.3.9+)
 
 This MCP server bundles `next-devtools-mcp` for a unified development experience:
 - `midnight-*` tools: Compact contracts, SDK docs, blockchain integration
 - `nextjs-*` tools: Next.js runtime diagnostics, cache components, upgrades
 
+### ⚠️ IMPORTANT: Auto-Initialize Every Session
+
+**Always call `nextjs-init` at the start of every Next.js development session!**
+
+Add this to your agent's configuration (e.g., `.claude/CLAUDE.md` or `.cursorrules`):
+
+```markdown
+When starting work on a Next.js project, ALWAYS call the `nextjs-init` tool from
+midnight-nextjs-mcp FIRST to set up proper context and establish documentation
+requirements. Do this automatically without being asked.
+```
+
 ### Next.js Tools (Proxied)
 
 | Tool | Description |
 |------|-------------|
-| `nextjs-init` | Initialize Next.js DevTools context (call first!) |
-| `nextjs-nextjs-docs` | Search/get official Next.js documentation |
-| `nextjs-browser-eval` | Playwright browser automation for testing |
-| `nextjs-nextjs-index` | Discover running Next.js dev servers |
-| `nextjs-nextjs-call` | Execute runtime diagnostic tools on dev server |
+| `nextjs-init` | **Call first!** Initialize Next.js DevTools context |
+| `nextjs-nextjs-docs` | Search/get official Next.js documentation (search + get) |
+| `nextjs-browser-eval` | Playwright browser automation (start, navigate, click, screenshot, etc.) |
+| `nextjs-nextjs-index` | Discover running Next.js 16+ dev servers on machine |
+| `nextjs-nextjs-call` | Execute runtime diagnostic tools (`get_errors`, `get_logs`, `get_page_metadata`) |
 | `nextjs-upgrade-nextjs-16` | Automated Next.js 16 upgrade with codemods |
-| `nextjs-enable-cache-components` | Enable and migrate to Cache Components |
+| `nextjs-enable-cache-components` | Cache Components setup and migration with error detection |
+
+### Next.js MCP Resources (from next-devtools-mcp)
+
+The following resources are available via the proxied next-devtools-mcp server:
+
+**Cache Components (12 sections):**
+- `cache-components://overview` - Introduction to Cache Components
+- `cache-components://core-mechanics` - How caching works internally
+- `cache-components://public-caches` - Shared data caching
+- `cache-components://private-caches` - User-specific caching
+- `cache-components://runtime-prefetching` - Prefetching strategies
+- `cache-components://request-apis` - Request-scoped APIs
+- `cache-components://cache-invalidation` - Revalidation patterns
+- `cache-components://advanced-patterns` - Complex caching scenarios
+- `cache-components://build-behavior` - Build-time caching
+- `cache-components://error-patterns` - Common errors and fixes
+- `cache-components://test-patterns` - Testing cached components
+- `cache-components://reference` - Complete API reference
+
+**Next.js 16 Migration:**
+- `nextjs16://migration/beta-to-stable` - Migration from beta
+- `nextjs16://migration/examples` - Migration code examples
+
+**Next.js Fundamentals:**
+- `nextjs-fundamentals://use-client` - Client component directive
 
 ### Next.js Prompts
 

@@ -1,6 +1,6 @@
 /**
  * Next.js DevTools Integration
- * Bridges next-devtools-mcp tools into midnight-nextjs-mcp
+ * Bridges next-devtools-mcp tools, resources, and prompts into midnight-nextjs-mcp
  *
  * This module spawns next-devtools-mcp as a subprocess and proxies
  * tool calls to it, providing a unified development experience
@@ -21,6 +21,17 @@ let nextDevToolsList: Array<{
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
+}> = [];
+let nextDevToolsResources: Array<{
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+}> = [];
+let nextDevToolsPrompts: Array<{
+  name: string;
+  description?: string;
+  arguments?: Array<{ name: string; description?: string; required?: boolean }>;
 }> = [];
 
 /**
@@ -64,9 +75,40 @@ export async function initNextDevTools(): Promise<boolean> {
       inputSchema: tool.inputSchema as Record<string, unknown>,
     }));
 
+    // List available resources
+    try {
+      const resourcesResponse = await nextDevToolsClient.listResources();
+      nextDevToolsResources = resourcesResponse.resources.map((resource) => ({
+        uri: resource.uri,
+        name: resource.name,
+        description: resource.description,
+        mimeType: resource.mimeType,
+      }));
+      logger.info(`Loaded ${nextDevToolsResources.length} resources from next-devtools-mcp`);
+    } catch {
+      logger.warn("Failed to load resources from next-devtools-mcp");
+    }
+
+    // List available prompts
+    try {
+      const promptsResponse = await nextDevToolsClient.listPrompts();
+      nextDevToolsPrompts = promptsResponse.prompts.map((prompt) => ({
+        name: prompt.name,
+        description: prompt.description,
+        arguments: prompt.arguments?.map((arg) => ({
+          name: arg.name,
+          description: arg.description,
+          required: arg.required,
+        })),
+      }));
+      logger.info(`Loaded ${nextDevToolsPrompts.length} prompts from next-devtools-mcp`);
+    } catch {
+      logger.warn("Failed to load prompts from next-devtools-mcp");
+    }
+
     nextDevToolsAvailable = true;
     logger.info(
-      `next-devtools-mcp integration initialized with ${nextDevToolsList.length} tools`
+      `next-devtools-mcp integration initialized with ${nextDevToolsList.length} tools, ${nextDevToolsResources.length} resources, ${nextDevToolsPrompts.length} prompts`
     );
     return true;
   } catch (error) {
@@ -97,6 +139,8 @@ export async function cleanupNextDevTools(): Promise<void> {
   }
   nextDevToolsAvailable = false;
   nextDevToolsList = [];
+  nextDevToolsResources = [];
+  nextDevToolsPrompts = [];
 }
 
 /**
@@ -220,12 +264,82 @@ export function isNextDevToolsAvailable(): boolean {
   return nextDevToolsAvailable;
 }
 
+/**
+ * Get list of Next.js DevTools resources
+ */
+export function getNextJsResources(): typeof nextDevToolsResources {
+  return nextDevToolsResources;
+}
+
+/**
+ * Get list of Next.js DevTools prompts
+ */
+export function getNextJsPrompts(): typeof nextDevToolsPrompts {
+  return nextDevToolsPrompts;
+}
+
+/**
+ * Read a resource from next-devtools-mcp
+ */
+export async function readNextJsResource(uri: string): Promise<string | null> {
+  if (!nextDevToolsAvailable || !nextDevToolsClient) {
+    return null;
+  }
+
+  try {
+    const response = await nextDevToolsClient.readResource({ uri });
+    const content = response.contents[0];
+    if (content && "text" in content) {
+      return content.text;
+    }
+    return null;
+  } catch (err) {
+    logger.error(`Error reading Next.js resource ${uri}:`, {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+/**
+ * Get a prompt from next-devtools-mcp
+ */
+export async function getNextJsPrompt(
+  name: string,
+  args?: Record<string, string>
+): Promise<{ messages: Array<{ role: string; content: { type: string; text: string } }> } | null> {
+  if (!nextDevToolsAvailable || !nextDevToolsClient) {
+    return null;
+  }
+
+  try {
+    const response = await nextDevToolsClient.getPrompt({
+      name,
+      arguments: args,
+    });
+    return {
+      messages: response.messages.map((m) => ({
+        role: m.role,
+        content: {
+          type: "text",
+          text: typeof m.content === "string" ? m.content : (m.content as { text: string }).text || "",
+        },
+      })),
+    };
+  } catch (err) {
+    logger.error(`Error getting Next.js prompt ${name}:`, {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
 // Tool definitions for the integration status tool
 export const nextjsIntegrationTools: ExtendedToolDefinition[] = [
   {
     name: "midnight-nextjs-status",
     description:
-      "Check the status of Next.js DevTools integration and list available tools",
+      "Check the status of Next.js DevTools integration and list available tools, resources, and prompts",
     inputSchema: {
       type: "object" as const,
       properties: {},
@@ -245,12 +359,16 @@ export const nextjsIntegrationTools: ExtendedToolDefinition[] = [
 export async function handleNextJsStatus(): Promise<{
   available: boolean;
   tools: string[];
+  resources: string[];
+  prompts: string[];
   message: string;
 }> {
   if (!nextDevToolsAvailable) {
     return {
       available: false,
       tools: [],
+      resources: [],
+      prompts: [],
       message:
         "next-devtools-mcp is not connected. " +
         "This may be because the package is not installed or failed to start. " +
@@ -261,10 +379,14 @@ export async function handleNextJsStatus(): Promise<{
   const tools = nextDevToolsList.map(
     (t) => `nextjs-${t.name.replace(/_/g, "-")}`
   );
+  const resources = nextDevToolsResources.map((r) => r.uri);
+  const prompts = nextDevToolsPrompts.map((p) => p.name);
 
   return {
     available: true,
     tools,
-    message: `Next.js DevTools integration active with ${tools.length} tools available: ${tools.join(", ")}`,
+    resources,
+    prompts,
+    message: `Next.js DevTools integration active with ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts available.`,
   };
 }

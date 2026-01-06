@@ -3,6 +3,9 @@ import {
   isNextJsTool,
   handleNextJsStatus,
   nextjsIntegrationTools,
+  getNextJsResources,
+  getNextJsPrompts,
+  isNextDevToolsAvailable,
 } from "../src/tools/nextjs/index.js";
 
 describe("Next.js Integration", () => {
@@ -38,12 +41,16 @@ describe("Next.js Integration", () => {
   });
 
   describe("handleNextJsStatus", () => {
-    it("should return status info", async () => {
+    it("should return status info with all fields", async () => {
       const result = await handleNextJsStatus();
       expect(result).toHaveProperty("available");
       expect(result).toHaveProperty("tools");
+      expect(result).toHaveProperty("resources");
+      expect(result).toHaveProperty("prompts");
       expect(result).toHaveProperty("message");
       expect(Array.isArray(result.tools)).toBe(true);
+      expect(Array.isArray(result.resources)).toBe(true);
+      expect(Array.isArray(result.prompts)).toBe(true);
     });
 
     it("should return unavailable message when not initialized", async () => {
@@ -55,6 +62,23 @@ describe("Next.js Integration", () => {
         // If somehow available, should have tools
         expect(result.tools.length).toBeGreaterThan(0);
       }
+    });
+  });
+
+  describe("Resource and Prompt accessors", () => {
+    it("should export getNextJsResources function", () => {
+      const resources = getNextJsResources();
+      expect(Array.isArray(resources)).toBe(true);
+    });
+
+    it("should export getNextJsPrompts function", () => {
+      const prompts = getNextJsPrompts();
+      expect(Array.isArray(prompts)).toBe(true);
+    });
+
+    it("should export isNextDevToolsAvailable function", () => {
+      const available = isNextDevToolsAvailable();
+      expect(typeof available).toBe("boolean");
     });
   });
 

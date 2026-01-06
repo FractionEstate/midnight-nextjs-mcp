@@ -122,7 +122,7 @@ Midnight tools are prefixed with `midnight-` (e.g., `midnight-search-compact`), 
 
 ### Next.js DevTools (Bundled)
 
-This server bundles [next-devtools-mcp](https://github.com/vercel/next-devtools-mcp) for unified development:
+This server bundles [next-devtools-mcp](https://github.com/vercel/next-devtools-mcp) (v0.3.9+) for unified development:
 
 | Tool | Description |
 |------|-------------|
@@ -133,6 +133,60 @@ This server bundles [next-devtools-mcp](https://github.com/vercel/next-devtools-
 | `nextjs-nextjs-call` | Execute runtime diagnostics (`get_errors`, `get_logs`, `get_page_metadata`) |
 | `nextjs-upgrade-nextjs-16` | Automated upgrade with codemods |
 | `nextjs-enable-cache-components` | Cache Components setup and migration |
+
+<details>
+<summary><strong>⚠️ Auto-Initialize Every Session</strong> (click to expand)</summary>
+
+**Always call `nextjs-init` at the start of every Next.js development session!**
+
+Add this to your agent's configuration:
+
+**Claude Desktop/Claude Code** (`.claude/CLAUDE.md`):
+```markdown
+When starting work on a Next.js project, ALWAYS call the `nextjs-init` tool from
+midnight-nextjs-mcp FIRST to set up proper context and establish documentation
+requirements. Do this automatically without being asked.
+```
+
+**Cursor** (`.cursorrules`):
+```
+When working with Next.js, always call the init tool from midnight-nextjs-mcp
+at the start of the session to establish proper context and documentation requirements.
+```
+
+</details>
+
+### Next.js MCP Resources (Proxied)
+
+Resources from next-devtools-mcp are automatically available:
+
+<details>
+<summary><strong>📚 Cache Components (13 sections)</strong></summary>
+
+- `cache-components://overview` - Introduction
+- `cache-components://core-mechanics` - How caching works
+- `cache-components://public-caches` - Shared data caching
+- `cache-components://private-caches` - User-specific caching
+- `cache-components://runtime-prefetching` - Prefetching strategies
+- `cache-components://request-apis` - Request-scoped APIs
+- `cache-components://cache-invalidation` - Revalidation patterns
+- `cache-components://advanced-patterns` - Complex scenarios
+- `cache-components://build-behavior` - Build-time caching
+- `cache-components://error-patterns` - Common errors and fixes
+- `cache-components://test-patterns` - Testing cached components
+- `cache-components://reference` - Complete API reference
+- `cache-components://route-handlers` - Route handler caching
+
+</details>
+
+<details>
+<summary><strong>📦 Next.js 16 Migration & Fundamentals</strong></summary>
+
+- `nextjs16://migration/beta-to-stable` - Migration from beta
+- `nextjs16://migration/examples` - Migration code examples
+- `nextjs-fundamentals://use-client` - Client component directive
+
+</details>
 
 ### MCP Capabilities
 
@@ -286,7 +340,7 @@ The hosted API runs on Cloudflare Workers + Vectorize. See [api/README.md](./api
 - [Midnight Docs](https://docs.midnight.network)
 - [MCP Spec](https://modelcontextprotocol.io)
 - [Midnight GitHub](https://github.com/midnightntwrk)
-
+- [nextjs devtools](https://github.com/vercel/next-devtools-mcp)
 ## License
 
 MIT
