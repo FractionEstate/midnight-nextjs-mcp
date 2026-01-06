@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-01-06
+
+### Fixed
+
+- **Pattern Collision in suggest-tool** - Improved intent routing accuracy
+  - Added `matchScore` tie-breaker: longer/more specific patterns rank higher
+  - "fetch the latest docs" now correctly routes to `fetch-docs` instead of `search-docs`
+  - Added more specific patterns to `fetch-docs` (e.g., "fetch the latest", "real-time docs")
+
+- **Path Validation** - Enhanced security for `fetch-docs`
+  - Block path traversal attempts (`../`)
+  - Block protocol injection (`http://`, `https://`, `//`)
+
+- **Missing Annotation** - Added `idempotentHint` to `fetch-docs`
+
+### Tests
+
+- Added routing tests for `fetch-docs` vs `search-docs` disambiguation
+- Synced test file's `suggestTool` implementation with handler changes
+
 ## [0.2.5] - 2026-01-06
 
 ### Fixed
