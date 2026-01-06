@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-06
+
+### Added
+
+- **Unified Midnight + Next.js MCP Server** - Renamed from `midnight-mcp` to `midnight-nextjs-mcp`
+  - Single MCP server for full-stack Midnight dApp development
+  - Midnight tools prefixed with `midnight-`, Next.js tools prefixed with `nextjs-`
+  - Seamless turbo monorepo development workflow
+
+- **Next.js DevTools Integration** - Bundled [next-devtools-mcp](https://github.com/vercel/next-devtools-mcp)
+  - `nextjs-init` - Initialize DevTools context (call first!)
+  - `nextjs-nextjs-docs` - Search/get official Next.js documentation
+  - `nextjs-browser-eval` - Playwright browser automation for testing
+  - `nextjs-nextjs-index` - Discover running Next.js 16+ dev servers
+  - `nextjs-nextjs-call` - Execute runtime diagnostics (`get_errors`, `get_logs`, `get_page_metadata`)
+  - `nextjs-upgrade-nextjs-16` - Automated upgrade with codemods
+  - `nextjs-enable-cache-components` - Cache Components setup and migration
+  - `midnight-nextjs-status` - Check integration status and list available tools
+
+- **Next.js Workflow Prompts**
+  - `nextjs:upgrade-to-16` - Guide for upgrading to Next.js 16
+  - `nextjs:enable-cache-components` - Cache Components migration workflow
+  - `nextjs:runtime-diagnostics` - Diagnose runtime issues in Next.js 16+
+  - `midnight:nextjs-dapp` - Scaffold complete Midnight + Next.js turbo monorepo
+
+- **Next.js Integration Resources**
+  - `midnight://code/integration/nextjs-provider` - React context provider for wallet integration
+  - `midnight://code/integration/nextjs-hooks` - Custom hooks (`useContract`, `useContractState`)
+  - `midnight://code/integration/turbo-config` - Full turbo monorepo configuration
+  - `midnight://code/integration/nextjs-devtools` - Next.js DevTools integration guide
+  - `midnight://code/integration/cache-components-guide` - Cache Components for Midnight dApps
+  - `midnight://code/integration/nextjs16-migration` - Next.js 16 migration guide
+
+### Changed
+
+- **Package renamed** - `midnight-mcp` → `midnight-nextjs-mcp`
+- **Tool count** - Now 28+ tools (Midnight + Next.js combined)
+- **Resource count** - Now 29 embedded resources
+- **Prompt count** - Now 9 workflow prompts
+
+### Technical
+
+- Next.js DevTools spawned as subprocess for clean module isolation
+- JSON-RPC 2.0 proxy for tool calls to next-devtools-mcp
+- Graceful fallback when next-devtools-mcp unavailable
+
 ## [0.2.6] - 2026-01-06
 
 ### Fixed
