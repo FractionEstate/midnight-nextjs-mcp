@@ -39,9 +39,9 @@ api/                    # Cloudflare Workers API (hosted backend)
 
 This server implements three core MCP primitives:
 - **Tools** (29): Executable functions (`tools/list`, `tools/call`)
-- **Resources** (23): Context data via `midnight://` URIs (`resources/list`, `resources/read`)
-  - 9 docs, 11 code examples/patterns, 3 schemas
-- **Prompts** (5): Reusable templates (`prompts/list`, `prompts/get`)
+- **Resources** (26): Context data via `midnight://` URIs (`resources/list`, `resources/read`)
+  - 9 docs, 14 code examples/patterns/integrations, 3 schemas
+- **Prompts** (6): Reusable templates (`prompts/list`, `prompts/get`)
 
 All primitives support `listChanged` notifications per MCP spec.
 
@@ -202,3 +202,56 @@ export circuit transfer(amount: Field): Void {
 ```
 
 Key concepts: `ledger` (on-chain state), `circuit` (ZK-proven logic), `witness` (private inputs), `@private` (shielded fields).
+
+## Next.js + Midnight Integration
+
+This MCP server provides comprehensive support for building Next.js dApps with Midnight:
+
+### Using with next-devtools-mcp
+
+For the best development experience, use **both** MCP servers together:
+- `midnight-mcp`: Compact contracts, SDK docs, blockchain integration
+- `next-devtools-mcp`: Next.js runtime diagnostics, cache components, upgrades
+
+### Midnight-specific Next.js Resources
+
+| Resource URI | Description |
+|--------------|-------------|
+| `midnight://code/integration/nextjs-provider` | React context provider for wallet integration |
+| `midnight://code/integration/nextjs-hooks` | Custom hooks (useContract, useContractState) |
+| `midnight://code/integration/turbo-config` | Full turbo monorepo configuration |
+
+### Prompt: midnight:nextjs-dapp
+
+Use the `midnight:nextjs-dapp` prompt to scaffold a complete turbo monorepo:
+
+```typescript
+// Arguments:
+{
+  projectName: "my-midnight-app",
+  features: "wallet-connect, private-data, token",
+  monorepoType: "turbo"  // turbo | nx | simple
+}
+```
+
+### Turbo Monorepo Structure
+
+```
+my-dapp/
+├── apps/
+│   └── web/                    # Next.js 16+ frontend
+│       ├── app/
+│       └── lib/midnight/       # SDK integration
+├── packages/
+│   ├── contracts/              # Compact smart contracts
+│   └── shared/                 # Shared types & utilities
+├── turbo.json
+└── pnpm-workspace.yaml
+```
+
+### Key Integration Patterns
+
+1. **Wallet Provider**: Wrap app with `MidnightProvider` from the resource
+2. **Contract Hooks**: Use `useContract<T>()` for type-safe interactions
+3. **WebAssembly**: Configure `next.config.ts` for ZK provers
+4. **Transpilation**: Add workspace packages to `transpilePackages`
