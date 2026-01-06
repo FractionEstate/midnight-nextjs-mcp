@@ -20,8 +20,16 @@ export const CheckVersionInputSchema = z.object({});
 
 export const AutoUpdateConfigInputSchema = z.object({});
 
+export const CheckDataFreshnessInputSchema = z.object({
+  repository: z
+    .string()
+    .optional()
+    .describe("Specific repository to check (e.g., 'compact', 'midnight-js'). If omitted, checks all repositories."),
+});
+
 // Type exports
 export type HealthCheckInput = z.infer<typeof HealthCheckInputSchema>;
 export type GetStatusInput = z.infer<typeof GetStatusInputSchema>;
 export type CheckVersionInput = z.infer<typeof CheckVersionInputSchema>;
 export type AutoUpdateConfigInput = z.infer<typeof AutoUpdateConfigInputSchema>;
+export type CheckDataFreshnessInput = z.infer<typeof CheckDataFreshnessInputSchema>;

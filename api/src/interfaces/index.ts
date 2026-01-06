@@ -2,6 +2,8 @@
  * Shared type definitions for the Midnight MCP API
  */
 
+/// <reference types="@cloudflare/workers-types" />
+
 // ============== Cloudflare Bindings ==============
 
 export type Bindings = {
@@ -10,6 +12,8 @@ export type Bindings = {
   ENVIRONMENT: string;
   METRICS: KVNamespace;
   DASHBOARD_PASSWORD?: string;
+  GITHUB_WEBHOOK_SECRET?: string;
+  GITHUB_TOKEN?: string; // For triggering workflow dispatch
 };
 
 // ============== Metrics Types ==============

@@ -7,16 +7,21 @@ on:
       force_full_reindex:
         description: "Force full reindex (ignore cache)"
         required: false
-        default: "false"
+        default: false
         type: boolean
+      repositories:
+        description: "Specific repos to index (comma-separated, e.g. 'compact,midnight-js')"
+        required: false
+        default: ""
+        type: string
 
-  # Webhook trigger (for release notifications)
+  # Webhook trigger (for release notifications and GitHub webhooks)
   repository_dispatch:
-    types: [midnight-release, reindex]
+    types: [midnight-release, reindex, push, release]
 
-  # Daily schedule (every day at 6am UTC)
+  # Schedule: Every 6 hours for comprehensive freshness
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 */6 * * *"
 
 # Prevent multiple indexing runs at the same time
 concurrency:
@@ -27,7 +32,6 @@ jobs:
   index:
     runs-on: ubuntu-latest
     timeout-minutes: 30 # Fast mode: tarball + batch + incremental
-    environment: CLOUDFLARE # Use the CLOUDFLARE environment for secrets
 
     steps:
       - uses: actions/checkout@v4

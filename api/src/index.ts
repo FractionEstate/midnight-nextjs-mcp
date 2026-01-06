@@ -14,6 +14,7 @@ import {
   statsRoutes,
   dashboardRoute,
   trackRoutes,
+  webhookRoutes,
 } from "./routes";
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -34,6 +35,7 @@ app.route("/", healthRoutes);
 app.route("/v1/search", searchRoutes);
 app.route("/v1/stats", statsRoutes);
 app.route("/v1/track", trackRoutes);
+app.route("/v1/webhook", webhookRoutes);
 app.route("/dashboard", dashboardRoute);
 
 export default app;

@@ -5,6 +5,11 @@ compatibility_date = "2024-12-01"
 [vars]
 ENVIRONMENT = "production"
 
+# Secrets (set via `wrangler secret put <NAME>`):
+# - OPENAI_API_KEY: OpenAI API key for embeddings
+# - DASHBOARD_PASSWORD: Password for dashboard access
+# - GITHUB_WEBHOOK_SECRET: Secret for verifying GitHub webhook signatures
+
 # Vectorize index for semantic search
 [[vectorize]]
 binding = "VECTORIZE"

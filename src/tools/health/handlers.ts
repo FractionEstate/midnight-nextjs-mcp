@@ -10,6 +10,10 @@ import {
   getQuickHealthStatus,
   getRateLimitStatus,
   formatRateLimitStatus,
+  generateFreshnessReport,
+  getRepositoryFreshness,
+  getMostRecentIndexTime,
+  formatRelativeTime,
 } from "../../utils/index.js";
 import { searchCache, fileCache, metadataCache } from "../../utils/cache.js";
 import type {
@@ -17,6 +21,7 @@ import type {
   GetStatusInput,
   CheckVersionInput,
   AutoUpdateConfigInput,
+  CheckDataFreshnessInput,
 } from "./schemas.js";
 
 import { CURRENT_VERSION } from "../../utils/version.js";
@@ -213,5 +218,71 @@ export async function getAutoUpdateConfig(_input: AutoUpdateConfigInput) {
     ],
     postUpdateMessage:
       "✅ Config updated! Please restart your editor completely (quit and reopen) to use the latest version.",
+  };
+}
+
+/**
+ * Check data freshness for indexed repositories
+ * Returns staleness status and last indexed timestamps
+ */
+export async function checkDataFreshness(input: CheckDataFreshnessInput) {
+  // If specific repository requested
+  if (input.repository) {
+    const freshness = getRepositoryFreshness(input.repository);
+
+    if (!freshness) {
+      return {
+        repository: input.repository,
+        status: "unknown",
+        message: `No freshness data available for '${input.repository}'. Repository may not be indexed yet.`,
+        suggestion: "Try using midnight-health-check with detailed=true to see indexed repositories.",
+      };
+    }
+
+    return {
+      repository: freshness.repository,
+      status: freshness.isStale ? "stale" : "fresh",
+      lastIndexed: freshness.lastIndexedAt,
+      lastIndexedRelative: formatRelativeTime(new Date(freshness.lastIndexedAt)),
+      documentCount: freshness.documentCount,
+      ...(freshness.isStale && {
+        warning: freshness.staleReason,
+        suggestion: "Data will be refreshed in the next scheduled indexing run (every 6 hours, or every 2 hours for priority repos)."
+      }),
+      ...(freshness.lastCommitSha && { lastCommitSha: freshness.lastCommitSha }),
+    };
+  }
+
+  // Full freshness report
+  const report = generateFreshnessReport();
+  const lastIndexed = getMostRecentIndexTime();
+
+  return {
+    summary: {
+      status: report.overallStatus,
+      totalRepositories: report.totalRepositories,
+      staleRepositories: report.staleRepositories,
+      freshRepositories: report.totalRepositories - report.staleRepositories,
+      lastIndexed: lastIndexed?.toISOString() || null,
+      lastIndexedRelative: lastIndexed ? formatRelativeTime(lastIndexed) : null,
+      generatedAt: report.generatedAt,
+    },
+    repositories: report.repositories.map(r => ({
+      repository: r.repository,
+      status: r.isStale ? "stale" : "fresh",
+      lastIndexed: r.lastIndexedAt,
+      documentCount: r.documentCount,
+      ...(r.isStale && { warning: r.staleReason }),
+    })),
+    indexingSchedule: {
+      fullIndex: "Every 6 hours",
+      priorityRepos: "Every 2 hours (compact, midnight-js, midnight-examples, lace-wallet-midnight)",
+      nextFullIndex: "Check GitHub Actions for exact timing",
+    },
+    message: report.overallStatus === "fresh"
+      ? "✅ All indexed data is fresh and up-to-date!"
+      : report.overallStatus === "partially-stale"
+        ? `⚠️ ${report.staleRepositories} repositories may have outdated data.`
+        : "❌ Most indexed data is stale. Next indexing run will refresh.",
   };
 }

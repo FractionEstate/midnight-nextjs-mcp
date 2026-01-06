@@ -7,7 +7,8 @@
     "deploy": "wrangler deploy",
     "create-index": "wrangler vectorize create midnight-code --dimensions=1536 --metric=cosine",
     "delete-index": "wrangler vectorize delete midnight-code",
-    "index": "npx tsx scripts/index-repos.ts"
+    "index": "npx tsx scripts/index-repos.ts",
+    "index:priority": "PRIORITY_ONLY=true npx tsx scripts/index-repos.ts"
   },
   "dependencies": {
     "@types/tar-stream": "^3.1.4",

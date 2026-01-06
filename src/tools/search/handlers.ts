@@ -14,6 +14,9 @@ import {
   searchCompactHosted,
   searchTypeScriptHosted,
   searchDocsHosted,
+  getStalenessWarning,
+  getMostRecentIndexTime,
+  formatRelativeTime,
 } from "../../utils/index.js";
 import type {
   SearchCompactInput,
@@ -136,9 +139,27 @@ function finalizeResponse<T extends object>(
   cacheKey: string,
   warnings: string[]
 ): T {
+  // Add freshness metadata
+  const lastIndexed = getMostRecentIndexTime();
+  const stalenessWarning = getStalenessWarning();
+
+  const freshnessMetadata = {
+    dataFreshness: {
+      lastIndexed: lastIndexed?.toISOString() || null,
+      lastIndexedRelative: lastIndexed ? formatRelativeTime(lastIndexed) : null,
+      ...(stalenessWarning && { warning: stalenessWarning }),
+    },
+  };
+
+  const allWarnings = [...warnings];
+  if (stalenessWarning) {
+    allWarnings.push(stalenessWarning);
+  }
+
   const finalResponse = {
     ...response,
-    ...(warnings.length > 0 && { warnings }),
+    ...freshnessMetadata,
+    ...(allWarnings.length > 0 && { warnings: allWarnings }),
   };
   searchCache.set(cacheKey, finalResponse);
   return finalResponse;

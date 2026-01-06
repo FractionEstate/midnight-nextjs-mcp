@@ -50,6 +50,20 @@ export {
 } from "./cache.js";
 export type { CacheOptions, CacheEntry, CacheStats } from "./cache.js";
 
+// Freshness tracking
+export {
+  recordIndexedRepository,
+  isRepositoryStale,
+  getRepositoryFreshness,
+  generateFreshnessReport,
+  getStalenessWarning,
+  clearFreshnessData,
+  initializeFreshnessFromAPI,
+  getMostRecentIndexTime,
+  formatRelativeTime,
+} from "./freshness.js";
+export type { RepositoryFreshness, FreshnessReport } from "./freshness.js";
+
 // Hosted API client
 export {
   searchCompactHosted,

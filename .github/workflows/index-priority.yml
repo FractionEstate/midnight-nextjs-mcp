@@ -1,0 +1,67 @@
+name: Index Priority Repositories
+
+on:
+  # More frequent schedule for high-priority repos (every 2 hours)
+  schedule:
+    - cron: "0 */2 * * *"
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      force_full_reindex:
+        description: "Force full reindex (ignore cache)"
+        required: false
+        default: false
+        type: boolean
+
+# Prevent multiple indexing runs at the same time
+concurrency:
+  group: midnight-priority-indexing
+  cancel-in-progress: false
+
+jobs:
+  index-priority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        working-directory: api
+        run: npm ci
+
+      - name: Run priority indexing
+        id: indexing
+        working-directory: api
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_REINDEX: ${{ inputs.force_full_reindex || 'false' }}
+          # Only index high-priority repos that change frequently
+          PRIORITY_REPOS: "compact,midnight-js,midnight-examples,lace-wallet-midnight"
+        run: npm run index:priority
+
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "## 🚀 Priority Indexing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.indexing.outcome }}" == "success" ]; then
+            echo "✅ **Status:** Success" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Repos:** compact, midnight-js, midnight-examples, lace-wallet-midnight" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

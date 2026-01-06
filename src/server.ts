@@ -729,6 +729,45 @@ export function notifyResourceUpdate(server: Server, uri: string): void {
 }
 
 /**
+ * Notify clients that the resource list has changed
+ * Call this after re-indexing when new resources are available
+ */
+export function notifyResourceListChanged(): void {
+  if (!serverInstance || !isConnected) {
+    logger.debug("Cannot send list_changed notification - server not connected");
+    return;
+  }
+
+  try {
+    serverInstance.notification({
+      method: "notifications/resources/list_changed",
+    });
+    logger.info("Sent resources/list_changed notification");
+  } catch (error) {
+    logger.warn("Failed to send list_changed notification", {
+      error: String(error),
+    });
+  }
+}
+
+/**
+ * Notify clients that tools list has changed
+ * (reserved for future dynamic tool updates)
+ */
+export function notifyToolListChanged(): void {
+  if (!serverInstance || !isConnected) return;
+
+  try {
+    serverInstance.notification({
+      method: "notifications/tools/list_changed",
+    });
+    logger.info("Sent tools/list_changed notification");
+  } catch {
+    // Ignore notification errors
+  }
+}
+
+/**
  * Get the list of active subscriptions
  */
 export function getActiveSubscriptions(): string[] {

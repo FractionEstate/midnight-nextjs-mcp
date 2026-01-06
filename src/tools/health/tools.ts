@@ -12,6 +12,7 @@ import {
   getStatus,
   checkVersion,
   getAutoUpdateConfig,
+  checkDataFreshness,
 } from "./handlers.js";
 
 // ============================================================================
@@ -115,6 +116,50 @@ const autoUpdateConfigOutputSchema: OutputSchema = {
   },
 };
 
+const dataFreshnessOutputSchema: OutputSchema = {
+  type: "object" as const,
+  properties: {
+    summary: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["fresh", "partially-stale", "stale", "unknown"] },
+        totalRepositories: { type: "number" },
+        staleRepositories: { type: "number" },
+        freshRepositories: { type: "number" },
+        lastIndexed: { type: "string" },
+        lastIndexedRelative: { type: "string" },
+        generatedAt: { type: "string" },
+      },
+      description: "Overall freshness summary",
+    },
+    repositories: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          repository: { type: "string" },
+          status: { type: "string" },
+          lastIndexed: { type: "string" },
+          documentCount: { type: "number" },
+          warning: { type: "string" },
+        },
+      },
+      description: "Per-repository freshness status",
+    },
+    indexingSchedule: {
+      type: "object",
+      properties: {
+        fullIndex: { type: "string" },
+        priorityRepos: { type: "string" },
+        nextFullIndex: { type: "string" },
+      },
+      description: "Indexing schedule information",
+    },
+    message: { type: "string", description: "Human-readable status message" },
+  },
+  description: "Data freshness status and staleness information",
+};
+
 // ============================================================================
 // Tool Definitions
 // ============================================================================
@@ -199,5 +244,30 @@ export const healthTools: ExtendedToolDefinition[] = [
       category: "health",
     },
     handler: getAutoUpdateConfig,
+  },
+  {
+    name: "midnight-data-freshness",
+    description:
+      "🕐 Check data freshness for indexed Midnight Network documentation and code. " +
+      "Returns when data was last indexed, staleness warnings, and indexing schedule. " +
+      "Use this to verify if the knowledge base is up-to-date before relying on search results.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        repository: {
+          type: "string",
+          description:
+            "Specific repository to check (e.g., 'compact', 'midnight-js'). If omitted, checks all repositories.",
+        },
+      },
+    },
+    outputSchema: dataFreshnessOutputSchema,
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      title: "🕐 Check Data Freshness",
+      category: "health",
+    },
+    handler: checkDataFreshness,
   },
 ];

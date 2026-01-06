@@ -38,6 +38,15 @@ const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const FORCE_REINDEX = process.env.FORCE_REINDEX === "true";
+const PRIORITY_ONLY = process.env.PRIORITY_ONLY === "true";
+
+// Priority repositories that change frequently and should be indexed more often
+const PRIORITY_REPOS_LIST = process.env.PRIORITY_REPOS?.split(",") || [
+  "compact",
+  "midnight-js",
+  "midnight-examples",
+  "lace-wallet-midnight",
+];
 
 if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_TOKEN || !OPENAI_API_KEY) {
   console.error("Missing required environment variables:");
@@ -207,11 +216,24 @@ async function indexRepository(owner: string, repo: string, branch: string) {
  * Main entry point
  */
 async function main() {
-  console.log("🚀 Starting Midnight repository indexing (FAST MODE)");
+  // Filter repositories based on mode
+  let reposToIndex = REPOSITORIES;
+
+  if (PRIORITY_ONLY) {
+    console.log("🚀 Starting PRIORITY repository indexing (FAST MODE)");
+    const prioritySet = new Set(PRIORITY_REPOS_LIST.map(r => r.toLowerCase().trim()));
+    reposToIndex = REPOSITORIES.filter(({ repo }) =>
+      prioritySet.has(repo.toLowerCase())
+    );
+    console.log(`Priority repos: ${PRIORITY_REPOS_LIST.join(", ")}`);
+  } else {
+    console.log("🚀 Starting Midnight repository indexing (FAST MODE)");
+  }
+
   console.log("=".repeat(50));
   console.log(`Target: Cloudflare Vectorize index 'midnight-code'`);
   console.log(`Time: ${new Date().toISOString()}`);
-  console.log(`Repos to index: ${REPOSITORIES.length}`);
+  console.log(`Repos to index: ${reposToIndex.length}`);
   if (FORCE_REINDEX) {
     console.log(
       `⚠️  FORCE REINDEX enabled - ignoring cache, reprocessing all files`
@@ -227,7 +249,7 @@ async function main() {
   let totalDeleted = 0;
   let failedRepos: string[] = [];
 
-  for (const { owner, repo, branch } of REPOSITORIES) {
+  for (const { owner, repo, branch } of reposToIndex) {
     const repoName = `${owner}/${repo}`;
     try {
       const result = await indexRepository(owner, repo, branch);
@@ -285,9 +307,7 @@ async function main() {
   console.log(`📄 Total documents indexed: ${totalDocs}`);
   console.log(`⏭️  Total files skipped (unchanged): ${totalSkipped}`);
   console.log(`🗑️  Total stale vectors deleted: ${totalDeleted}`);
-  console.log(
-    `✅ Successful repos: ${results.filter((r) => r.success).length}/${REPOSITORIES.length}`
-  );
+  console.log(`✅ Successful repos: ${results.filter((r) => r.success).length}/${reposToIndex.length}`);
 
   if (failedRepos.length > 0) {
     console.log(`\n⚠️  Failed repos: ${failedRepos.join(", ")}`);

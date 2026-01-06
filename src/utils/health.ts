@@ -3,6 +3,11 @@
  */
 
 import { githubClient } from "../pipeline/index.js";
+import {
+  generateFreshnessReport,
+  getMostRecentIndexTime,
+  formatRelativeTime,
+} from "./freshness.js";
 
 export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
@@ -15,6 +20,12 @@ export interface HealthStatus {
     message?: string;
     latency?: number;
   }[];
+  freshness?: {
+    lastIndexed: string | null;
+    lastIndexedRelative: string | null;
+    staleRepositories: number;
+    totalRepositories: number;
+  };
 }
 
 // Track server start time
@@ -121,6 +132,59 @@ function checkMemory(): { status: "pass" | "warn" | "fail"; message: string } {
 }
 
 /**
+ * Check data freshness status
+ */
+function checkFreshness(): {
+  status: "pass" | "warn" | "fail";
+  message: string;
+  details: HealthStatus["freshness"];
+} {
+  const report = generateFreshnessReport();
+  const lastIndexed = getMostRecentIndexTime();
+
+  const details: HealthStatus["freshness"] = {
+    lastIndexed: lastIndexed?.toISOString() || null,
+    lastIndexedRelative: lastIndexed ? formatRelativeTime(lastIndexed) : null,
+    staleRepositories: report.staleRepositories,
+    totalRepositories: report.totalRepositories,
+  };
+
+  // If no data tracked yet, warn but don't fail
+  if (report.totalRepositories === 0) {
+    return {
+      status: "warn",
+      message: "No freshness data available yet",
+      details,
+    };
+  }
+
+  // Check staleness ratio
+  const staleRatio = report.staleRepositories / report.totalRepositories;
+
+  if (staleRatio > 0.5) {
+    return {
+      status: "fail",
+      message: `${report.staleRepositories}/${report.totalRepositories} repositories are stale`,
+      details,
+    };
+  }
+
+  if (report.staleRepositories > 0) {
+    return {
+      status: "warn",
+      message: `${report.staleRepositories} repositories may have outdated data`,
+      details,
+    };
+  }
+
+  return {
+    status: "pass",
+    message: `All ${report.totalRepositories} repositories are fresh`,
+    details,
+  };
+}
+
+/**
  * Perform a full health check
  */
 export async function getHealthStatus(): Promise<HealthStatus> {
@@ -133,11 +197,13 @@ export async function getHealthStatus(): Promise<HealthStatus> {
   ]);
 
   const memoryCheck = checkMemory();
+  const freshnessCheck = checkFreshness();
 
   checks.push(
     { name: "github_api", ...githubCheck },
     { name: "vector_store", ...vectorCheck },
-    { name: "memory", ...memoryCheck }
+    { name: "memory", ...memoryCheck },
+    { name: "data_freshness", status: freshnessCheck.status, message: freshnessCheck.message }
   );
 
   // Determine overall status
@@ -157,6 +223,7 @@ export async function getHealthStatus(): Promise<HealthStatus> {
     version: VERSION,
     uptime: Math.round((Date.now() - startTime) / 1000),
     checks,
+    freshness: freshnessCheck.details,
   };
 }
 
