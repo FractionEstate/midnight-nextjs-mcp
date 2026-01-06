@@ -259,6 +259,7 @@ USAGE GUIDANCE:
     },
     annotations: {
       readOnlyHint: true,
+      idempotentHint: true, // Same path returns same content
       openWorldHint: true, // Fetches from external URL
       title: "🌐 Fetch Live Docs",
       category: "search" as ToolCategory,

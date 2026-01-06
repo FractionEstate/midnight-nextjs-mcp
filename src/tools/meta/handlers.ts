@@ -159,18 +159,29 @@ export async function suggestTool(input: SuggestToolInput) {
     tool: string;
     reason: string;
     confidence: "high" | "medium" | "low";
+    matchScore: number; // Higher = better match (more patterns or longer patterns)
   }> = [];
 
   for (const mapping of INTENT_TO_TOOL) {
-    const matchCount = mapping.patterns.filter((p) =>
+    const matchedPatterns = mapping.patterns.filter((p) =>
       intentLower.includes(p.toLowerCase())
-    ).length;
+    );
+    const matchCount = matchedPatterns.length;
 
     if (matchCount > 0) {
+      // Calculate match score: count * 10 + sum of matched pattern lengths
+      // This prefers more specific (longer) patterns when counts are equal
+      const patternLengthScore = matchedPatterns.reduce(
+        (sum, p) => sum + p.length,
+        0
+      );
+      const matchScore = matchCount * 10 + patternLengthScore;
+
       matchedTools.push({
         tool: mapping.tool,
         reason: mapping.reason,
         confidence: matchCount >= 2 ? "high" : "medium",
+        matchScore,
       });
     }
   }
@@ -198,11 +209,15 @@ export async function suggestTool(input: SuggestToolInput) {
     }
   }
 
-  // Sort by confidence
+  // Sort by confidence first, then by match score (higher is better)
   const confidenceOrder = { high: 0, medium: 1, low: 2 };
-  matchedTools.sort(
-    (a, b) => confidenceOrder[a.confidence] - confidenceOrder[b.confidence]
-  );
+  matchedTools.sort((a, b) => {
+    const confDiff =
+      confidenceOrder[a.confidence] - confidenceOrder[b.confidence];
+    if (confDiff !== 0) return confDiff;
+    // Higher match score = better, so sort descending
+    return b.matchScore - a.matchScore;
+  });
 
   // Build response
   if (matchedTools.length === 0 && matchedCategories.length === 0) {

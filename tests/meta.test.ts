@@ -15,18 +15,29 @@ async function suggestTool(input: { intent: string }) {
     tool: string;
     reason: string;
     confidence: "high" | "medium" | "low";
+    matchScore: number;
   }> = [];
 
   for (const mapping of INTENT_TO_TOOL) {
-    const matchCount = mapping.patterns.filter((p) =>
+    const matchedPatterns = mapping.patterns.filter((p) =>
       intentLower.includes(p.toLowerCase())
-    ).length;
+    );
+    const matchCount = matchedPatterns.length;
 
     if (matchCount > 0) {
+      // Calculate match score: count * 10 + sum of matched pattern lengths
+      // This prefers more specific (longer) patterns when counts are equal
+      const patternLengthScore = matchedPatterns.reduce(
+        (sum, p) => sum + p.length,
+        0
+      );
+      const matchScore = matchCount * 10 + patternLengthScore;
+
       matchedTools.push({
         tool: mapping.tool,
         reason: mapping.reason,
         confidence: matchCount >= 2 ? "high" : "medium",
+        matchScore,
       });
     }
   }
@@ -53,10 +64,15 @@ async function suggestTool(input: { intent: string }) {
     }
   }
 
+  // Sort by confidence first, then by match score (higher is better)
   const confidenceOrder = { high: 0, medium: 1, low: 2 };
-  matchedTools.sort(
-    (a, b) => confidenceOrder[a.confidence] - confidenceOrder[b.confidence]
-  );
+  matchedTools.sort((a, b) => {
+    const confDiff =
+      confidenceOrder[a.confidence] - confidenceOrder[b.confidence];
+    if (confDiff !== 0) return confDiff;
+    // Higher match score = better, so sort descending
+    return b.matchScore - a.matchScore;
+  });
 
   if (matchedTools.length === 0 && matchedCategories.length === 0) {
     return {
@@ -264,6 +280,39 @@ describe("suggestTool", () => {
             s.tool === "midnight-document-contract" ||
             s.tool === "midnight-generate-documentation"
         )
+      ).toBe(true);
+    });
+
+    it("should route 'fetch docs' to fetch-docs, not search-docs", async () => {
+      const result = await suggestTool({
+        intent: "fetch the latest docs",
+      });
+
+      // fetch-docs should be the primary suggestion (first or highest confidence)
+      const fetchDocsSuggestion = result.suggestions.find(
+        (s) => s.tool === "midnight-fetch-docs"
+      );
+      const searchDocsSuggestion = result.suggestions.find(
+        (s) => s.tool === "midnight-search-docs"
+      );
+
+      expect(fetchDocsSuggestion).toBeDefined();
+      // fetch-docs should appear before search-docs or have higher confidence
+      if (searchDocsSuggestion && fetchDocsSuggestion) {
+        const fetchIndex = result.suggestions.indexOf(fetchDocsSuggestion);
+        const searchIndex = result.suggestions.indexOf(searchDocsSuggestion);
+        expect(fetchIndex).toBeLessThan(searchIndex);
+      }
+    });
+
+    it("should route general 'show me docs' to search-docs", async () => {
+      const result = await suggestTool({
+        intent: "show me the documentation about witnesses",
+      });
+
+      // search-docs should match for discovery queries
+      expect(
+        result.suggestions.some((s) => s.tool === "midnight-search-docs")
       ).toBe(true);
     });
   });

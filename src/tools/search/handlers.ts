@@ -543,11 +543,11 @@ export async function fetchDocs(input: {
   let normalizedPath = path.startsWith("/") ? path : `/${path}`;
   normalizedPath = normalizedPath.replace(/\/$/, ""); // Remove trailing slash
 
-  // Validate path doesn't contain suspicious characters
-  if (/[<>"\s]/.test(normalizedPath)) {
+  // Validate path doesn't contain suspicious characters or patterns
+  if (/[<>"\s]|\.\.\/|^https?:|^\/\//.test(normalizedPath)) {
     return {
       error: "Invalid path",
-      details: ["Path contains invalid characters"],
+      details: ["Path contains invalid characters or patterns"],
       suggestion: `Use a clean path like '/develop/faq' or '/getting-started/installation'`,
     };
   }
