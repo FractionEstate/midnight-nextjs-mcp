@@ -114,26 +114,40 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 | **Versioning**    | `get-version-info`, `check-breaking-changes`, `get-migration-guide`, `get-file-at-version`, `compare-syntax`, `get-latest-syntax` | Version tracking and migration                   |
 | **AI Generation** | `generate-contract`, `review-contract`, `document-contract`                                                                       | AI-powered code generation _(requires sampling)_ |
 | **Compound**      | `upgrade-check`, `get-repo-context`                                                                                               | Multi-step operations _(saves 50-70% tokens)_    |
-| **Next.js**       | `nextjs-*` (via next-devtools-mcp)                                                                                                | Cache inspection, diagnostics, turbo monorepo    |
+| **Next.js**       | `init`, `nextjs-docs`, `browser-eval`, `nextjs-index`, `nextjs-call`, `upgrade-nextjs-16`, `enable-cache-components`             | Runtime diagnostics, docs, browser automation    |
 | **Health**        | `health-check`, `get-status`, `check-version`                                                                                     | Server status and version checking               |
 | **Discovery**     | `list-tool-categories`, `list-category-tools`, `suggest-tool`                                                                     | Explore available tools and get recommendations  |
 
 Midnight tools are prefixed with `midnight-` (e.g., `midnight-search-compact`), Next.js tools with `nextjs-`.
+
+### Next.js DevTools (Bundled)
+
+This server bundles [next-devtools-mcp](https://github.com/vercel/next-devtools-mcp) for unified development:
+
+| Tool | Description |
+|------|-------------|
+| `nextjs-init` | **Call first!** Initialize DevTools context |
+| `nextjs-nextjs-docs` | Search/get official Next.js documentation |
+| `nextjs-browser-eval` | Playwright browser automation |
+| `nextjs-nextjs-index` | Discover running Next.js 16+ dev servers |
+| `nextjs-nextjs-call` | Execute runtime diagnostics (`get_errors`, `get_logs`, `get_page_metadata`) |
+| `nextjs-upgrade-nextjs-16` | Automated upgrade with codemods |
+| `nextjs-enable-cache-components` | Cache Components setup and migration |
 
 ### MCP Capabilities
 
 | Capability      | Feature                                         |
 | --------------- | ----------------------------------------------- |
 | **Tools**       | 28+ tools with `listChanged` notifications      |
-| **Resources**   | 26 embedded resources with subscription support |
-| **Prompts**     | 6 workflow prompts (incl. Next.js dApp scaffold)|
+| **Resources**   | 29 embedded resources with subscription support |
+| **Prompts**     | 9 workflow prompts (Midnight + Next.js)         |
 | **Logging**     | Client-controllable log level                   |
 | **Completions** | Autocomplete for prompt arguments               |
 | **Progress**    | Real-time progress for compound tools           |
 | **Sampling**    | AI-powered generation (when client supports it) |
 | **Next.js**     | Full turbo monorepo integration                 |
 
-### 26 Embedded Resources
+### 29 Embedded Resources
 
 Quick references available offline:
 
@@ -145,6 +159,8 @@ Quick references available offline:
 - Common errors & solutions
 - Next.js integration patterns
 - Turbo monorepo configuration
+- Cache Components guide
+- Next.js 16 migration guide
 
 ### Static Analysis
 
@@ -159,14 +175,20 @@ Quick references available offline:
 | `module_level_const`      | P0       | Use `pure circuit` instead                              |
 | + 10 more checks          | P1-P2    | Overflow, division, assertions, etc.                    |
 
-### 6 Prompts
+### 9 Prompts
 
-- `create-contract` — Generate new contracts
-- `review-contract` — Security and code review
-- `explain-concept` — Learn Midnight concepts
-- `compare-approaches` — Compare implementation patterns
-- `debug-contract` — Troubleshoot issues
-- `nextjs-dapp` — Scaffold a complete Midnight + Next.js turbo monorepo
+**Midnight Prompts:**
+- `midnight:create-contract` — Generate new contracts
+- `midnight:review-contract` — Security and code review
+- `midnight:explain-concept` — Learn Midnight concepts
+- `midnight:compare-approaches` — Compare implementation patterns
+- `midnight:debug-contract` — Troubleshoot issues
+- `midnight:nextjs-dapp` — Scaffold Midnight + Next.js turbo monorepo
+
+**Next.js Prompts:**
+- `nextjs:upgrade-to-16` — Guide for upgrading to Next.js 16
+- `nextjs:enable-cache-components` — Cache Components migration workflow
+- `nextjs:runtime-diagnostics` — Diagnose runtime issues in Next.js 16+
 
 ---
 

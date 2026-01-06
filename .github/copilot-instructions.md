@@ -171,6 +171,7 @@ it("should analyze contract", async () => {
 | `generation` | 3 | AI-powered contract generation (requires sampling) |
 | `health` | 5 | Server status, version checking, data freshness |
 | `meta` | 3 | Tool discovery and suggestions |
+| `nextjs` | 7+ | Next.js DevTools (proxied from next-devtools-mcp) |
 
 ## Environment Variables
 
@@ -215,6 +216,27 @@ This MCP server bundles `next-devtools-mcp` for a unified development experience
 - `midnight-*` tools: Compact contracts, SDK docs, blockchain integration
 - `nextjs-*` tools: Next.js runtime diagnostics, cache components, upgrades
 
+### Next.js Tools (Proxied)
+
+| Tool | Description |
+|------|-------------|
+| `nextjs-init` | Initialize Next.js DevTools context (call first!) |
+| `nextjs-nextjs-docs` | Search/get official Next.js documentation |
+| `nextjs-browser-eval` | Playwright browser automation for testing |
+| `nextjs-nextjs-index` | Discover running Next.js dev servers |
+| `nextjs-nextjs-call` | Execute runtime diagnostic tools on dev server |
+| `nextjs-upgrade-nextjs-16` | Automated Next.js 16 upgrade with codemods |
+| `nextjs-enable-cache-components` | Enable and migrate to Cache Components |
+
+### Next.js Prompts
+
+| Prompt | Description |
+|--------|-------------|
+| `nextjs:upgrade-to-16` | Guide for upgrading to Next.js 16 |
+| `nextjs:enable-cache-components` | Cache Components migration workflow |
+| `nextjs:runtime-diagnostics` | Diagnose runtime issues in Next.js 16+ |
+| `midnight:nextjs-dapp` | Scaffold Midnight + Next.js turbo monorepo |
+
 ### Midnight-specific Next.js Resources
 
 | Resource URI | Description |
@@ -222,6 +244,9 @@ This MCP server bundles `next-devtools-mcp` for a unified development experience
 | `midnight://code/integration/nextjs-provider` | React context provider for wallet integration |
 | `midnight://code/integration/nextjs-hooks` | Custom hooks (useContract, useContractState) |
 | `midnight://code/integration/turbo-config` | Full turbo monorepo configuration |
+| `midnight://code/integration/nextjs-devtools` | Next.js DevTools integration guide |
+| `midnight://code/integration/cache-components-guide` | Cache Components for Midnight dApps |
+| `midnight://code/integration/nextjs16-migration` | Next.js 16 migration guide |
 
 ### Prompt: midnight:nextjs-dapp
 
@@ -257,3 +282,4 @@ my-dapp/
 2. **Contract Hooks**: Use `useContract<T>()` for type-safe interactions
 3. **WebAssembly**: Configure `next.config.ts` for ZK provers
 4. **Transpilation**: Add workspace packages to `transpilePackages`
+5. **Cache Components**: Use public caches for contract state, private for wallet

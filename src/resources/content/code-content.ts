@@ -1590,7 +1590,7 @@ Use with nextjs-nextjs-index and nextjs-nextjs-call tools.
 ## Post-Migration Checklist
 
 1. ✅ All params are awaited
-2. ✅ All searchParams are awaited  
+2. ✅ All searchParams are awaited
 3. ✅ cookies() calls are awaited
 4. ✅ headers() calls are awaited
 5. ✅ API routes handle async params

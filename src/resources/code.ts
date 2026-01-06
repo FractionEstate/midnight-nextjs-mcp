@@ -100,6 +100,28 @@ export const codeResources: ResourceDefinition[] = [
       "Complete turbo.json, next.config.ts, and package.json for Midnight + Next.js monorepo",
     mimeType: "application/json",
   },
+  // Next.js DevTools Integration Resources
+  {
+    uri: "midnight://code/integration/nextjs-devtools",
+    name: "Next.js DevTools Integration",
+    description:
+      "Guide to using Next.js DevTools MCP tools (init, docs, browser_eval, runtime diagnostics)",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "midnight://code/integration/cache-components-guide",
+    name: "Cache Components Guide",
+    description:
+      "Optimizing Next.js 16 caching for Midnight dApps - public/private caches, Suspense, invalidation",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "midnight://code/integration/nextjs16-migration",
+    name: "Next.js 16 Migration Guide",
+    description:
+      "Breaking changes and migration steps for Next.js 16 with Midnight dApps",
+    mimeType: "text/markdown",
+  },
 ];
 
 /**

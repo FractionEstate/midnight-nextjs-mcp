@@ -76,6 +76,41 @@ describe("Code Resources", () => {
     expect(content).toContain("commit");
     expect(content).toContain("nullifier");
   });
+
+  // Next.js integration resources
+  it("should list Next.js integration resources", () => {
+    const uris = codeResources.map((r) => r.uri);
+    expect(uris).toContain("midnight://code/integration/nextjs-provider");
+    expect(uris).toContain("midnight://code/integration/nextjs-hooks");
+    expect(uris).toContain("midnight://code/integration/turbo-config");
+    expect(uris).toContain("midnight://code/integration/nextjs-devtools");
+    expect(uris).toContain("midnight://code/integration/cache-components-guide");
+    expect(uris).toContain("midnight://code/integration/nextjs16-migration");
+  });
+
+  it("should get Next.js DevTools integration guide", async () => {
+    const content = await getCode("midnight://code/integration/nextjs-devtools");
+    expect(content).toBeTruthy();
+    expect(content).toContain("nextjs-init");
+    expect(content).toContain("nextjs-nextjs-docs");
+    expect(content).toContain("nextjs-browser-eval");
+  });
+
+  it("should get Cache Components guide", async () => {
+    const content = await getCode("midnight://code/integration/cache-components-guide");
+    expect(content).toBeTruthy();
+    expect(content).toContain("Cache Components");
+    expect(content).toContain("Public caches");
+    expect(content).toContain("Private caches");
+  });
+
+  it("should get Next.js 16 migration guide", async () => {
+    const content = await getCode("midnight://code/integration/nextjs16-migration");
+    expect(content).toBeTruthy();
+    expect(content).toContain("async");
+    expect(content).toContain("params");
+    expect(content).toContain("searchParams");
+  });
 });
 
 describe("Schema Resources", () => {
