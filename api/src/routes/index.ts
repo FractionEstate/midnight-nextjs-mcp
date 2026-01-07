@@ -8,3 +8,4 @@ export { default as statsRoutes } from "./stats";
 export { default as dashboardRoute } from "./dashboard";
 export { default as trackRoutes } from "./track";
 export { default as webhookRoutes } from "./webhook";
+export { default as registryRoutes } from "./registry";

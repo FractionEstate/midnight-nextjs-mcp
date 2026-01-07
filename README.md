@@ -246,6 +246,60 @@ Quick references available offline:
 
 ---
 
+## MCP Registry
+
+This server includes an **MCP Registry v0.1** implementation, allowing AI clients (Copilot, Claude, etc.) to discover and configure the server automatically.
+
+### Registry URL
+
+```
+https://midnight-mcp-api.midnightmcp.workers.dev
+```
+
+### Registry Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /v0.1` | Registry info |
+| `GET /v0.1/servers` | List all servers |
+| `GET /v0.1/servers/{name}/versions` | List versions |
+| `GET /v0.1/servers/{name}/versions/latest` | Get latest version |
+
+### Configure Custom Registry in IDE
+
+**VS Code / Copilot:**
+1. Open Settings → search "MCP Registry"
+2. Add URL: `https://midnight-mcp-api.midnightmcp.workers.dev`
+3. Restart Copilot Chat
+
+**JetBrains (Preview/Nightly):**
+1. Settings → Tools → Copilot → MCP Registry URL
+2. Add the registry URL
+
+The server will appear in "Browse MCP Servers" for one-click installation.
+
+### server.json
+
+This repository includes a `server.json` file following the [MCP Registry schema](https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json):
+
+```json
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.olanetsoft/midnight-nextjs-mcp",
+  "title": "Midnight + Next.js MCP",
+  "description": "Unified MCP server for Midnight blockchain development and Next.js dApps...",
+  "version": "0.3.0",
+  "packages": [{
+    "registry_name": "npm",
+    "name": "midnight-nextjs-mcp",
+    "version": "0.3.0",
+    "runtime": "node"
+  }]
+}
+```
+
+---
+
 ## Indexed Repositories
 
 The API indexes **39 Midnight repositories**:

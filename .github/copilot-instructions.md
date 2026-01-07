@@ -29,6 +29,8 @@ src/                    # MCP server (main package)
 
 api/                    # Cloudflare Workers API (hosted backend)
 ├── src/routes/         # Hono-based HTTP endpoints
+│   ├── registry.ts     # MCP Registry v0.1 API
+│   └── search.ts       # Semantic search endpoints
 └── scripts/            # Repository indexing scripts
 ```
 
@@ -37,13 +39,28 @@ api/                    # Cloudflare Workers API (hosted backend)
 - **Hosted mode** (default): Searches via hosted API. Zero config.
 - **Local mode** (`MIDNIGHT_LOCAL=true`): ChromaDB + OpenAI embeddings locally.
 
+## MCP Registry v0.1
+
+The hosted API implements the [MCP Registry v0.1 specification](https://github.com/modelcontextprotocol/registry):
+
+```
+GET /v0.1/servers                              # List all MCP servers
+GET /v0.1/servers/{name}/versions              # List versions of a server
+GET /v0.1/servers/{name}/versions/{version}    # Get specific version
+GET /v0.1/servers/{name}/versions/latest       # Get latest version
+```
+
+Registry URL: `https://midnight-mcp-api.midnightmcp.workers.dev`
+
+The `server.json` file in the repository root follows the registry schema for automatic discovery.
+
 ## MCP Primitives (per spec)
 
 This server implements three core MCP primitives:
-- **Tools** (28+): Executable functions (`tools/list`, `tools/call`)
-- **Resources** (26): Context data via `midnight://` URIs (`resources/list`, `resources/read`)
-  - 9 docs, 14 code examples/patterns/integrations, 3 schemas
-- **Prompts** (6): Reusable templates (`prompts/list`, `prompts/get`)
+- **Tools** (30): Executable functions (`tools/list`, `tools/call`)
+- **Resources** (35): Context data via `midnight://` URIs (`resources/list`, `resources/read`)
+  - 12 docs, 19 code examples/patterns/integrations/infrastructure, 3 schemas
+- **Prompts** (9): Reusable templates (`prompts/list`, `prompts/get`)
 
 All primitives support `listChanged` notifications per MCP spec.
 
@@ -58,6 +75,7 @@ Tools live in `src/tools/{category}/` with this structure:
 export const MyToolInputSchema = z.object({
   param: z.string().describe("Description shown to LLM"),
 });
+
 export type MyToolInput = z.infer<typeof MyToolInputSchema>;
 
 // handlers.ts - Implement business logic

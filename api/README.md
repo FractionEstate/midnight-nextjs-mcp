@@ -1,6 +1,6 @@
 # Midnight + Next.js MCP API
 
-Cloudflare Workers + Vectorize backend for semantic search.
+Cloudflare Workers + Vectorize backend for semantic search and MCP Registry.
 
 ## Quick Start
 
@@ -15,6 +15,67 @@ curl -X POST http://localhost:8787/v1/search/compact \
   -H "Content-Type: application/json" \
   -d '{"query": "token transfer", "limit": 5}'
 ```
+
+## MCP Registry v0.1
+
+This API implements the [MCP Registry v0.1 specification](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/api/generic-registry-api.md) for server discovery.
+
+### Registry Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v0.1` | GET | Registry info |
+| `/v0.1/servers` | GET | List all MCP servers |
+| `/v0.1/servers/{name}/versions` | GET | List versions of a server |
+| `/v0.1/servers/{name}/versions/{version}` | GET | Get specific version |
+| `/v0.1/servers/{name}/versions/latest` | GET | Get latest version |
+
+### Example: List Servers
+
+```bash
+curl https://midnight-mcp-api.midnightmcp.workers.dev/v0.1/servers
+```
+
+```json
+{
+  "servers": [
+    {
+      "server": {
+        "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+        "name": "io.github.olanetsoft/midnight-nextjs-mcp",
+        "title": "Midnight + Next.js MCP",
+        "description": "Unified MCP server for Midnight blockchain development...",
+        "version": "0.3.0",
+        "packages": [{ "registry_name": "npm", "name": "midnight-nextjs-mcp", "version": "0.3.0" }]
+      },
+      "_meta": {
+        "io.modelcontextprotocol.registry/official": {
+          "status": "active",
+          "publishedAt": "2025-01-01T00:00:00Z",
+          "isLatest": true
+        }
+      }
+    }
+  ],
+  "metadata": { "count": 1 }
+}
+```
+
+### Example: Get Latest Version
+
+```bash
+curl https://midnight-mcp-api.midnightmcp.workers.dev/v0.1/servers/io.github.olanetsoft%2Fmidnight-nextjs-mcp/versions/latest
+```
+
+### Configure as Custom Registry
+
+In your IDE (VS Code, JetBrains, etc.), set the MCP Registry URL to:
+
+```
+https://midnight-mcp-api.midnightmcp.workers.dev
+```
+
+This allows Copilot and other AI assistants to discover and use the Midnight MCP server.
 
 ## Deployment
 
@@ -33,7 +94,7 @@ npm run index
 npm run deploy
 ```
 
-## Endpoints
+## Search Endpoints
 
 | Endpoint                | Method | Description          |
 | ----------------------- | ------ | -------------------- |
