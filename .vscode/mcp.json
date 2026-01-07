@@ -1,8 +1,9 @@
 {
   "servers": {
     "midnight-nextjs-mcp": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["-y", "midnight-nextjs-mcp"],
+      "args": ["-y", "midnight-nextjs-mcp@latest"],
       "env": {
         "GITHUB_TOKEN": "${input:githubToken}",
         "LOG_LEVEL": "info"
