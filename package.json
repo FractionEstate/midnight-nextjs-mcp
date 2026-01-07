@@ -5,8 +5,15 @@
   "description": "Unified MCP Server for Midnight Blockchain + Next.js Development - Combines Compact contracts, SDK docs, and turbo monorepo support",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "midnight-nextjs-mcp": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "scripts": {
     "build": "tsup",
@@ -64,6 +71,7 @@
   },
   "files": [
     "dist/**/*.js",
+    "dist/**/*.js.map",
     "dist/**/*.d.ts",
     "README.md",
     "LICENSE"
