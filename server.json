@@ -1,68 +1,49 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.fractionestate/midnight-nextjs-mcp",
+  "name": "io.github.FractionEstate/midnight-nextjs-mcp",
   "title": "Midnight + Next.js MCP",
-  "description": "Unified MCP server for Midnight blockchain development and Next.js dApps. Provides semantic search across Compact contracts, TypeScript SDK, documentation, and full Next.js DevTools integration.",
+  "description": "Unified MCP server for Midnight blockchain development and Next.js dApps.",
   "version": "0.3.0",
-  "websiteUrl": "https://github.com/FractionEstate/midnight-nextjs-mcp",
   "repository": {
     "url": "https://github.com/FractionEstate/midnight-nextjs-mcp",
-    "source": "github",
-    "directory": "/"
+    "source": "github"
   },
-  "icons": [
-    {
-      "src": "https://raw.githubusercontent.com/FractionEstate/midnight-nextjs-mcp/main/docs/icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
   "packages": [
     {
-      "registry_name": "npm",
-      "name": "midnight-nextjs-mcp",
+      "registryType": "npm",
+      "identifier": "midnight-nextjs-mcp",
       "version": "0.3.0",
-      "runtime": "node",
-      "runtime_arguments": ["--experimental-vm-modules"],
-      "package_arguments": [],
-      "environment_variables": {
-        "GITHUB_TOKEN": "optional - increases GitHub API rate limits (60 -> 5000 req/hr)",
-        "LOG_LEVEL": "info|debug|warn|error",
-        "MIDNIGHT_LOCAL": "true for local ChromaDB mode"
-      }
-    }
-  ],
-  "remotes": [
-    {
-      "type": "stdio"
-    }
-  ],
-  "_meta": {
-    "io.modelcontextprotocol.registry/publisher-provided": {
-      "author": "Idris Olubisi",
-      "license": "MIT",
-      "categories": ["blockchain", "web-development", "ai-coding", "developer-tools"],
-      "keywords": [
-        "midnight",
-        "blockchain",
-        "zk-proofs",
-        "compact",
-        "nextjs",
-        "react",
-        "turbo",
-        "monorepo",
-        "dapp",
-        "web3",
-        "zero-knowledge",
-        "smart-contracts"
-      ],
-      "capabilities": {
-        "tools": 30,
-        "resources": 35,
-        "prompts": 9
+      "transport": {
+        "type": "stdio"
       },
-      "integrations": ["next-devtools-mcp"],
-      "transports": ["stdio", "http", "sse"]
+      "runtimeHint": "npx",
+      "runtimeArguments": [
+        {
+          "type": "positional",
+          "value": "--experimental-vm-modules",
+          "valueHint": "node-flag"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "GITHUB_TOKEN",
+          "description": "GitHub Personal Access Token - increases API rate limits",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "LOG_LEVEL",
+          "description": "Logging verbosity level",
+          "isRequired": false,
+          "default": "info"
+        },
+        {
+          "name": "MIDNIGHT_LOCAL",
+          "description": "Enable local mode with ChromaDB for offline semantic search",
+          "isRequired": false,
+          "default": "false"
+        }
+      ]
     }
-  }
+  ]
 }

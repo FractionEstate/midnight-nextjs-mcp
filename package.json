@@ -1,6 +1,7 @@
 {
   "name": "midnight-nextjs-mcp",
   "version": "0.3.0",
+  "mcpName": "io.github.FractionEstate/midnight-nextjs-mcp",
   "description": "Unified MCP Server for Midnight Blockchain + Next.js Development - Combines Compact contracts, SDK docs, and turbo monorepo support",
   "type": "module",
   "main": "dist/index.js",
@@ -31,7 +32,7 @@
     "nextjs",
     "turbo-monorepo"
   ],
-  "author": "Idris Olubisi",
+  "author": "@FractionEstate, Idris Olubisi",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.24.0",

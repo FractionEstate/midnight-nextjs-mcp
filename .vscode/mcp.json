@@ -1,0 +1,20 @@
+{
+  "servers": {
+    "midnight-nextjs-mcp": {
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp"],
+      "env": {
+        "GITHUB_TOKEN": "${input:githubToken}",
+        "LOG_LEVEL": "info"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "githubToken",
+      "type": "promptString",
+      "description": "GitHub Personal Access Token (optional - increases API rate limits)",
+      "password": true
+    }
+  ]
+}

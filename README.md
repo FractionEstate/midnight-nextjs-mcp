@@ -2,6 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/midnight-nextjs-mcp.svg)](https://www.npmjs.com/package/midnight-nextjs-mcp)
 [![npm downloads](https://img.shields.io/npm/dm/midnight-nextjs-mcp)](https://www.npmjs.com/package/midnight-nextjs-mcp)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-brightgreen)](https://github.com/modelcontextprotocol/registry)
 [![License](https://img.shields.io/npm/l/midnight-nextjs-mcp)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![CI](https://github.com/FractionEstate/midnight-nextjs-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/FractionEstate/midnight-nextjs-mcp/actions/workflows/ci.yml)
@@ -36,6 +37,28 @@ If you use nvm, Claude Desktop may not see your nvm-managed Node. Use this confi
 </details>
 
 ## Quick Start
+
+### VS Code with GitHub Copilot (MCP Registry)
+
+The easiest way to install! Open VS Code and:
+
+1. Open the **Extensions** panel (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+2. Click the **filter icon** and select **MCP Registry**
+3. Search for `midnight-nextjs-mcp`
+4. Click **Install**
+
+Or manually add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "midnight-nextjs-mcp": {
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
 
 ### Claude Desktop
 
@@ -76,10 +99,6 @@ Or manually add to `.cursor/mcp.json`:
   }
 }
 ```
-
-### VS Code Copilot
-
-Add to `.vscode/mcp.json` or use Command Palette: `MCP: Add Server` → "command (stdio)" → `npx -y midnight-nextjs-mcp@latest`
 
 ### Windsurf
 
