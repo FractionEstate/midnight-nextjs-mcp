@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/midnight-nextjs-mcp.git"
+    "url": "https://github.com/FractionEstate/midnight-nextjs-mcp.git"
   },
   "bin": {
     "midnight-nextjs-mcp": "./dist/index.js"
