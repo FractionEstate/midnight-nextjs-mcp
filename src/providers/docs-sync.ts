@@ -156,6 +156,94 @@ export const DOC_SOURCES: DocSourceConfig[] = [
     priority: 95,
   },
 
+  // Wallet and DApp Development
+  {
+    id: "wallet-dev-guide",
+    path: "docs/develop/guides/wallet-dev-guide.mdx",
+    type: "mdx",
+    description: "Complete Wallet SDK Developer Guide",
+    category: "sdk",
+    priority: 100,
+  },
+  {
+    id: "dapp-connector-guide",
+    path: "docs/develop/guides/dapp-connector-guide.mdx",
+    type: "mdx",
+    description: "DApp Connector Integration Guide",
+    category: "sdk",
+    priority: 95,
+  },
+  {
+    id: "react-wallet-connect",
+    path: "docs/develop/how-to/react-wallet-connect.mdx",
+    type: "mdx",
+    description: "React Wallet Connection",
+    category: "tutorial",
+    priority: 90,
+  },
+  {
+    id: "nextjs-wallet-connect",
+    path: "docs/develop/how-to/nextjs-wallet-connect.mdx",
+    type: "mdx",
+    description: "Next.js Wallet Connection",
+    category: "tutorial",
+    priority: 90,
+  },
+  {
+    id: "deploy-mn-app",
+    path: "docs/getting-started/deploy-mn-app.mdx",
+    type: "mdx",
+    description: "Deploying Midnight Applications",
+    category: "tutorial",
+    priority: 85,
+  },
+
+  // Contract Examples
+  {
+    id: "counter-example",
+    path: "docs/develop/examples/counter.mdx",
+    type: "mdx",
+    description: "Counter Contract Example",
+    category: "tutorial",
+    priority: 80,
+  },
+  {
+    id: "bulletin-board-example",
+    path: "docs/develop/examples/bulletin-board.mdx",
+    type: "mdx",
+    description: "Bulletin Board Contract Example",
+    category: "tutorial",
+    priority: 75,
+  },
+
+  // API Reference
+  {
+    id: "api-providers",
+    path: "docs/develop/reference/providers.mdx",
+    type: "mdx",
+    description: "Midnight Providers API",
+    category: "api",
+    priority: 85,
+  },
+  {
+    id: "api-contract-deploy",
+    path: "docs/develop/reference/contract-deploy.mdx",
+    type: "mdx",
+    description: "Contract Deployment API",
+    category: "api",
+    priority: 80,
+  },
+
+  // Release Notes and Support
+  {
+    id: "support-matrix",
+    path: "docs/relnotes/support-matrix.mdx",
+    type: "mdx",
+    description: "Version Support Matrix",
+    category: "general",
+    priority: 80,
+  },
+
   // LLMs.txt - High-level overview for AI
   {
     id: "llms-overview",

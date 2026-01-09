@@ -29,6 +29,9 @@ import * as midnightScaffoldProject from "./midnight/scaffold-project.js"
 import * as midnightCompileContract from "./midnight/compile-contract.js"
 import * as midnightAnalyzeContract from "./midnight/analyze-contract.js"
 import * as midnightCheckVersions from "./midnight/check-versions.js"
+import * as midnightDeployContract from "./midnight/deploy-contract.js"
+import * as midnightCallContract from "./midnight/call-contract.js"
+import { createWalletModule, walletStateModule, transferTokensModule } from "./midnight/wallet-tools.js"
 
 // Import documentation tools with auto-sync
 import { documentationToolModules } from "./midnight/documentation-tools.js"
@@ -77,6 +80,13 @@ export const midnightTools: ToolModule[] = [
   midnightCompileContract as unknown as ToolModule,
   midnightAnalyzeContract as unknown as ToolModule,
   midnightCheckVersions as unknown as ToolModule,
+  // Contract deployment and interaction
+  midnightDeployContract as unknown as ToolModule,
+  midnightCallContract as unknown as ToolModule,
+  // Wallet management tools
+  createWalletModule as unknown as ToolModule,
+  walletStateModule as unknown as ToolModule,
+  transferTokensModule as unknown as ToolModule,
   // Documentation tools with auto-sync from official docs
   ...documentationToolModules,
   // Dynamic tools (for toolset management)
@@ -158,6 +168,12 @@ export const toolNameToTelemetryName: Record<string, string> = {
   midnight_compile_contract: "mcp/midnight_compile_contract",
   midnight_analyze_contract: "mcp/midnight_analyze_contract",
   midnight_check_versions: "mcp/midnight_check_versions",
+  midnight_deploy_contract: "mcp/midnight_deploy_contract",
+  midnight_call_contract: "mcp/midnight_call_contract",
+  // Wallet tools
+  midnight_create_wallet: "mcp/midnight_create_wallet",
+  midnight_wallet_state: "mcp/midnight_wallet_state",
+  midnight_transfer_tokens: "mcp/midnight_transfer_tokens",
   // Documentation tools with auto-sync
   "midnight-search-docs": "mcp/midnight_search_docs",
   "midnight-fetch-docs": "mcp/midnight_fetch_docs",

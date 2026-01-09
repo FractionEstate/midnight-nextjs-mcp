@@ -64,6 +64,7 @@ import * as nextjsDocsLlmsIndex from "./resources/(nextjs-docs)/llms-index.js"
 // Import Midnight resources
 import * as midnightCompactOverview from "./resources/(midnight-compact)/overview.js"
 import * as midnightCompactReference from "./resources/(midnight-compact)/reference.js"
+import * as midnightCompactStdlib from "./resources/(midnight-compact)/stdlib.js"
 import * as midnightSdkOverview from "./resources/(midnight-sdk)/overview.js"
 
 // Import Midnight prompts
@@ -141,6 +142,7 @@ const resources = [
   // Midnight resources
   midnightCompactOverview,
   midnightCompactReference,
+  midnightCompactStdlib,
   midnightSdkOverview,
 ]
 

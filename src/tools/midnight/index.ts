@@ -16,6 +16,13 @@ export * as compileContract from "./compile-contract.js"
 export * as analyzeContract from "./analyze-contract.js"
 export * as checkVersions from "./check-versions.js"
 
+// Contract interaction tools
+export * as deployContract from "./deploy-contract.js"
+export * as callContract from "./call-contract.js"
+
+// Wallet tools
+export * as walletTools from "./wallet-tools.js"
+
 // Documentation tools with auto-sync
 export * from "./documentation-tools.js"
 
@@ -23,7 +30,7 @@ export * from "./documentation-tools.js"
 export const categoryMetadata = {
   name: "midnight",
   displayName: "Midnight Network",
-  description: "Development tools for the Midnight Network blockchain including contract compilation, deployment, network queries, and documentation search.",
-  version: "0.1.0",
+  description: "Development tools for the Midnight Network blockchain including contract compilation, deployment, wallet management, network queries, and documentation search.",
+  version: "0.2.0",
 }
 

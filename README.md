@@ -22,15 +22,33 @@ This MCP server works with any AI assistant that supports the Model Context Prot
 ## 🌙 Features
 
 ### Midnight Network Tools
+
+#### Contract Development
 - **`midnight_init`** - Initialize development context
-- **`midnight_network_status`** - Check network health (Indexer, Proof Server, Node)
+- **`midnight_compile_contract`** - Compile Compact contracts to TypeScript/ZK artifacts
+- **`midnight_analyze_contract`** - Static analysis for contracts
+- **`midnight_deploy_contract`** - Deploy contracts to the network
+- **`midnight_call_contract`** - Execute circuit calls on deployed contracts
+- **`midnight_scaffold_project`** - Create new dApp projects from templates
+
+#### Wallet & Tokens
+- **`midnight_create_wallet`** - Generate new wallet with seed phrase
+- **`midnight_wallet_state`** - Get detailed wallet state and balances
+- **`midnight_transfer_tokens`** - Transfer tDUST tokens
 - **`midnight_get_balance`** - Query token balances
+
+#### Network & Queries
+- **`midnight_network_status`** - Check network health (Indexer, Proof Server, Node)
 - **`midnight_get_block`** - Query blockchain blocks
 - **`midnight_get_transaction`** - Query transaction details
+- **`midnight_check_versions`** - Check for Midnight package updates
+
+#### Documentation
 - **`midnight_search_docs`** - Search Midnight documentation
-- **`midnight_scaffold_project`** - Create new dApp projects
-- **`midnight_compile_contract`** - Compile Compact contracts
-- **`midnight_analyze_contract`** - Static analysis for contracts
+- **`midnight-fetch-docs`** - Fetch specific documentation pages
+- **`midnight-sync-docs`** - Sync documentation from official repo
+- **`midnight-docs-status`** - Check documentation sync status
+- **`midnight-list-docs`** - List available documentation sources
 
 ### Next.js DevTools
 - **`init`** - Initialize Next.js development context
