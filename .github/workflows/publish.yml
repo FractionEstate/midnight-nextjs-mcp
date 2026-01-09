@@ -64,14 +64,13 @@ jobs:
             echo "No NPM token found in secrets; failing validation step"
             exit 1
           fi
+          trap 'rm -f ~/.npmrc' EXIT
           echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > ~/.npmrc
           if ! npm whoami; then
             echo "NPM auth failed with provided token"
-            rm -f ~/.npmrc
             exit 1
           fi
           echo "NPM token validated"
-          rm -f ~/.npmrc
 
       - name: Publish to npm
         id: publish
