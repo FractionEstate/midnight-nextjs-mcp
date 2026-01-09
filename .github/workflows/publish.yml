@@ -40,6 +40,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate NPM token
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_ELEVATED || secrets.NPM_TOKEN || secrets.NPM_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "No NPM token found in secrets; publish step may be skipped or fail"
+          else
+            echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > ~/.npmrc
+            if ! npm whoami; then
+              echo "NPM auth failed with provided token"
+              exit 1
+            fi
+            echo "NPM token validated"
+          fi
+
       - name: Build
         run: pnpm build
 
@@ -65,7 +80,8 @@ jobs:
             echo "No NPM token found, skipping npm publish"
             echo "published=false" >> $GITHUB_OUTPUT
           else
-            echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > ~/.npmrc            # Publish using pnpm to match repo tooling            npm publish --access public
+            echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > ~/.npmrc
+            npm publish --access public
             echo "published=true" >> $GITHUB_OUTPUT
           fi
 
@@ -89,6 +105,12 @@ jobs:
         run: mcp-publisher login github-oidc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: MCP publish dry-run
+        run: |
+          set -e
+          mcp-publisher whoami || true
+          mcp-publisher publish --dry-run
 
       - name: Publish to MCP Registry
         run: mcp-publisher publish
