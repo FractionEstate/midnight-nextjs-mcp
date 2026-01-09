@@ -400,6 +400,93 @@ export function generateToolsetsHelp(
 // =============================================================================
 
 /**
+ * Known valid toolset IDs
+ */
+export const VALID_TOOLSETS = [
+  "midnight:network",
+  "midnight:contract",
+  "midnight:dev",
+  "midnight:docs",
+  "midnight:wallet",
+  "nextjs:docs",
+  "nextjs:dev",
+  "nextjs:migration",
+  "all",
+  "default",
+  "midnight",
+  "nextjs",
+] as const
+
+export type ValidToolsetId = (typeof VALID_TOOLSETS)[number]
+
+/**
+ * Validate toolset names and return suggestions for invalid ones
+ */
+export function validateToolsets(toolsets: string[]): {
+  valid: string[]
+  invalid: string[]
+  suggestions: Map<string, string[]>
+} {
+  const valid: string[] = []
+  const invalid: string[] = []
+  const suggestions = new Map<string, string[]>()
+
+  for (const ts of toolsets) {
+    const normalized = ts.toLowerCase().trim()
+    
+    if (VALID_TOOLSETS.includes(normalized as ValidToolsetId)) {
+      valid.push(normalized)
+    } else {
+      invalid.push(ts)
+      // Find similar toolsets for suggestions
+      const similar = VALID_TOOLSETS.filter((v) => {
+        const distance = levenshteinDistance(normalized, v)
+        return distance <= 3 || v.includes(normalized) || normalized.includes(v.split(":")[1] ?? v)
+      })
+      if (similar.length > 0) {
+        suggestions.set(ts, similar as string[])
+      }
+    }
+  }
+
+  return { valid, invalid, suggestions }
+}
+
+/**
+ * Simple Levenshtein distance for suggestions
+ */
+function levenshteinDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length
+  if (b.length === 0) return a.length
+
+  const matrix: number[][] = []
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i]
+  }
+
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1]
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        )
+      }
+    }
+  }
+
+  return matrix[b.length][a.length]
+}
+
+/**
  * Validate CLI configuration
  */
 export function validateCliConfig(config: ServerConfig): {
@@ -409,6 +496,19 @@ export function validateCliConfig(config: ServerConfig): {
 } {
   const errors: string[] = []
   const warnings: string[] = []
+
+  // Toolset validation
+  if (config.enabledToolsets) {
+    const { invalid, suggestions } = validateToolsets(config.enabledToolsets)
+    for (const ts of invalid) {
+      const similar = suggestions.get(ts)
+      if (similar && similar.length > 0) {
+        errors.push(`Unknown toolset '${ts}'. Did you mean: ${similar.join(", ")}?`)
+      } else {
+        errors.push(`Unknown toolset '${ts}'. Run with --help for available toolsets.`)
+      }
+    }
+  }
 
   // Content window size validation
   if (config.contentWindowSize < 100) {
