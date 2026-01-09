@@ -40,14 +40,148 @@ pnpm build
 
 ## 🚀 Usage
 
-### With Claude Desktop
+### Quick Start with npx
 
-Add to your Claude Desktop configuration:
+The easiest way to use this MCP server is via npx — no installation required:
 
 ```json
 {
   "mcpServers": {
-    "midnight-nextjs": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+### Configuration Examples
+
+#### VS Code (Claude Extension)
+
+Add to your VS Code `settings.json` or `.vscode/mcp.json`:
+
+```json
+{
+  "claude.mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+#### Claude Desktop (macOS)
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+#### Claude Desktop (Windows)
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+#### Claude Desktop (Linux)
+
+Edit `~/.config/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+#### Cursor IDE
+
+Add to your Cursor MCP configuration (`.cursor/mcp.json` in your project or global settings):
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+#### Windsurf / Codeium
+
+Add to your Windsurf MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+#### Using Global Installation
+
+If you prefer a global install instead of npx:
+
+```bash
+npm install -g midnight-nextjs-mcp
+```
+
+Then configure:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "midnight-nextjs-mcp"
+    }
+  }
+}
+```
+
+#### Local Development / From Source
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
       "command": "node",
       "args": ["/path/to/midnight-nextjs-mcp/dist/index.js"]
     }
