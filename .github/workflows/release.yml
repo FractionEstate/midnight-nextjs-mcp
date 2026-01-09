@@ -50,17 +50,21 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish to npm (if token present)
+      - name: Publish to npm
         id: publish-npm
-        if: ${{ steps.check-version.outputs.skip != 'true' && (secrets.NPM_TOKEN_ELEVATED != '' || secrets.NPM_TOKEN != '' || secrets.NPM_ACCESS_TOKEN != '') }}
+        if: ${{ steps.check-version.outputs.skip != 'true' }}
         env:
-          # Prefer an elevated token, fall back to NPM_TOKEN or NPM_ACCESS_TOKEN
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN_ELEVATED != '' && secrets.NPM_TOKEN_ELEVATED || secrets.NPM_TOKEN != '' && secrets.NPM_TOKEN || secrets.NPM_ACCESS_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_ELEVATED != '' && secrets.NPM_TOKEN_ELEVATED || secrets.NPM_TOKEN != '' && secrets.NPM_TOKEN || secrets.NPM_ACCESS_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN_ELEVATED || secrets.NPM_TOKEN || secrets.NPM_ACCESS_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_ELEVATED || secrets.NPM_TOKEN || secrets.NPM_ACCESS_TOKEN }}
         run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-          pnpm publish --access public
-          echo "published=true" >> $GITHUB_OUTPUT
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "No NPM token found, skipping npm publish"
+            echo "published=false" >> $GITHUB_OUTPUT
+          else
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+            pnpm publish --access public
+            echo "published=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
