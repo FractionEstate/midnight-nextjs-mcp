@@ -1,0 +1,29 @@
+name: Docs Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Runs daily at 03:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    name: Sync Midnight docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run docs sync
+        run: node ./scripts/run-docs-sync.mjs
