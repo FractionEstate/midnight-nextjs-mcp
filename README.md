@@ -343,13 +343,19 @@ Run the MCP server in a Docker container:
 
 ```bash
 # Enable both tool categories (default)
-node dist/index.js
+npx midnight-nextjs-mcp@latest
 
-# Disable Midnight tools
-node dist/index.js --no-midnight
+# Disable Midnight tools (Next.js only)
+npx midnight-nextjs-mcp@latest --no-midnight
 
-# Disable Next.js tools
-node dist/index.js --no-nextjs
+# Disable Next.js tools (Midnight only)
+npx midnight-nextjs-mcp@latest --no-nextjs
+
+# Check package versions on startup
+npx midnight-nextjs-mcp@latest --check-versions
+
+# Set version polling interval (default 24 hours)
+npx midnight-nextjs-mcp@latest --poll-interval=12
 ```
 
 ## 🏗️ Project Structure

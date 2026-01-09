@@ -71,8 +71,9 @@ import * as createMidnightContractPrompt from "./prompts/create-midnight-contrac
 
 // Parse CLI arguments for tool categories and features
 const args = process.argv.slice(2)
-// Default behavior: enable Next.js devtools by default; Midnight tools are opt-in via --midnight
-const enableMidnight = args.includes("--midnight") ? true : args.includes("--no-midnight") ? false : false
+// Default behavior: enable both Midnight and Next.js tools by default
+// Use --no-midnight or --no-nextjs to disable specific toolsets
+const enableMidnight = args.includes("--no-midnight") ? false : true
 const enableNextjs = args.includes("--no-nextjs") ? false : true
 const enableAlpha = args.includes("--alpha")
 const enableVersionPolling = !args.includes("--no-version-polling")
