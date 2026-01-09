@@ -5,7 +5,13 @@
  */
 
 import { z } from "zod"
+import { exec } from "child_process"
+import { promisify } from "util"
+import { mkdir, writeFile, access, constants } from "fs/promises"
+import { join } from "path"
 import { getScaffoldVersions, getWalletVersions, type VersionOptions } from "../../providers/versions.js"
+
+const execAsync = promisify(exec)
 
 export const inputSchema = {
   name: z
@@ -23,6 +29,18 @@ export const inputSchema = {
     .enum(["npm", "pnpm", "yarn"])
     .optional()
     .describe("Package manager to use (defaults to pnpm)"),
+  output_dir: z
+    .string()
+    .optional()
+    .describe("Output directory (defaults to current directory)"),
+  use_cli: z
+    .boolean()
+    .optional()
+    .describe("Use create-mn-app CLI if available (defaults to false)"),
+  create_files: z
+    .boolean()
+    .optional()
+    .describe("Actually create files on disk (defaults to false, just shows preview)"),
 }
 
 export const metadata = {
@@ -54,6 +72,9 @@ type ScaffoldProjectArgs = {
   template?: "counter" | "token" | "voting" | "blank"
   include_ui?: boolean
   package_manager?: "npm" | "pnpm" | "yarn"
+  output_dir?: string
+  use_cli?: boolean
+  create_files?: boolean
 }
 
 // Template definitions - Based on official Midnight documentation
@@ -304,7 +325,25 @@ export async function handler(args: ScaffoldProjectArgs): Promise<string> {
   const template = args.template ?? "counter"
   const includeUI = args.include_ui ?? true
   const packageManager = args.package_manager ?? "pnpm"
+  const outputDir = args.output_dir ?? process.cwd()
+  const useCli = args.use_cli ?? false
+  const createFiles = args.create_files ?? false
   const templateData = TEMPLATES[template]
+
+  // Try to use create-mn-app CLI if requested
+  if (useCli) {
+    try {
+      const cliResult = await tryCreateMnApp(args.name, template, packageManager, outputDir)
+      if (cliResult.success) {
+        return cliResult.message
+      }
+      // Fall through to manual scaffolding if CLI fails
+    } catch {
+      // CLI not available, continue with manual scaffolding
+    }
+  }
+
+  const projectPath = join(outputDir, args.name)
 
   const projectStructure = `
 ${args.name}/
@@ -369,6 +408,66 @@ ${includeUI ? `│   ├── components/
     },
   }
 
+  // Create files if requested
+  if (createFiles) {
+    const result = await createProjectFiles({
+      projectPath,
+      projectName: args.name,
+      template,
+      templateData,
+      includeUI,
+      packageJson,
+    })
+
+    if (!result.success) {
+      return `# ❌ Failed to Create Project
+
+**Error:** ${result.error}
+
+## Troubleshooting
+
+1. Check if the directory already exists: \`${projectPath}\`
+2. Verify write permissions to \`${outputDir}\`
+3. Try with a different project name
+
+## Manual Alternative
+
+Run the setup commands below to create the project manually.
+`
+    }
+
+    return `# ✅ Project Created Successfully
+
+## Project: ${args.name}
+
+**Location:** \`${projectPath}\`
+**Template:** ${template} - ${templateData.description}
+**Files Created:** ${result.filesCreated}
+
+---
+
+## Next Steps
+
+\`\`\`bash
+# Navigate to project
+cd ${projectPath}
+
+# Install dependencies
+${packageManager} install
+
+# Compile contracts
+${packageManager} run compile
+
+# Start development
+${packageManager} run dev
+\`\`\`
+
+---
+
+📚 **Documentation:** [docs.midnight.network](https://docs.midnight.network)
+`
+  }
+
   return `# 🚀 Scaffold Midnight Project
 
 ## Project: ${args.name}
@@ -413,7 +512,19 @@ ${JSON.stringify(packageJson, null, 2)}
 
 ---
 
-## Setup Commands
+## Create Project Files
+
+To actually create the project files on disk, call with \`create_files: true\`:
+
+\`\`\`
+midnight_scaffold_project({
+  name: "${args.name}",
+  template: "${template}",
+  create_files: true
+})
+\`\`\`
+
+Or run manually:
 
 \`\`\`bash
 # Create project directory
@@ -435,18 +546,342 @@ ${packageManager} run dev
 
 ---
 
-## Next Steps
+## Alternative: Use create-mn-app CLI
 
-1. **Create the project structure** using the commands above
-2. **Copy the contract code** to \`contracts/${args.name}.compact\`
-3. **Copy the witness code** to \`src/contract/witnesses.ts\`
-4. **Compile the contract** with \`${packageManager} run compile\`
-5. **Configure network** in \`src/providers/midnight.ts\`
-6. **Deploy and test** your dApp!
+\`\`\`bash
+npx create-mn-app ${args.name} --template ${template}
+\`\`\`
 
 ---
 
 📚 **Documentation:** [docs.midnight.network](https://docs.midnight.network)
 💬 **Community:** [Discord](https://discord.gg/midnight)
 `
+}
+
+// Helper: Try to use create-mn-app CLI
+async function tryCreateMnApp(
+  name: string,
+  template: string,
+  packageManager: string,
+  outputDir: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Check if create-mn-app is available
+    await execAsync("npx create-mn-app --version")
+
+    // Run create-mn-app
+    const cmd = `cd ${outputDir} && npx create-mn-app ${name} --template ${template} --package-manager ${packageManager}`
+    const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 })
+
+    return {
+      success: true,
+      message: `# ✅ Project Created with create-mn-app
+
+## Project: ${name}
+
+**Location:** \`${join(outputDir, name)}\`
+**Template:** ${template}
+
+## CLI Output
+
+\`\`\`
+${stdout}
+${stderr}
+\`\`\`
+
+## Next Steps
+
+\`\`\`bash
+cd ${name}
+${packageManager} install
+${packageManager} run dev
+\`\`\`
+`,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: `create-mn-app failed: ${(error as Error).message}`,
+    }
+  }
+}
+
+// Helper: Create project files on disk
+async function createProjectFiles(options: {
+  projectPath: string
+  projectName: string
+  template: string
+  templateData: { contract: string; witnesses: string; description: string }
+  includeUI: boolean
+  packageJson: Record<string, unknown>
+}): Promise<{ success: boolean; filesCreated: number; error?: string }> {
+  const { projectPath, projectName, templateData, includeUI, packageJson } = options
+  let filesCreated = 0
+
+  try {
+    // Check if directory already exists
+    try {
+      await access(projectPath, constants.F_OK)
+      return { success: false, filesCreated: 0, error: `Directory already exists: ${projectPath}` }
+    } catch {
+      // Directory doesn't exist, continue
+    }
+
+    // Create directory structure
+    const dirs = [
+      projectPath,
+      join(projectPath, "contracts"),
+      join(projectPath, "src"),
+      join(projectPath, "src", "contract"),
+      join(projectPath, "src", "providers"),
+    ]
+
+    if (includeUI) {
+      dirs.push(join(projectPath, "src", "components"))
+    }
+
+    for (const dir of dirs) {
+      await mkdir(dir, { recursive: true })
+    }
+
+    // Write contract file
+    await writeFile(
+      join(projectPath, "contracts", `${projectName}.compact`),
+      templateData.contract.trim()
+    )
+    filesCreated++
+
+    // Write witnesses file
+    await writeFile(
+      join(projectPath, "src", "contract", "witnesses.ts"),
+      templateData.witnesses.trim()
+    )
+    filesCreated++
+
+    // Write contract index
+    await writeFile(
+      join(projectPath, "src", "contract", "index.ts"),
+      `// Contract interaction code
+// Import generated types after compilation
+// import { Contract } from './generated/${projectName}';
+
+export * from './witnesses';
+`
+    )
+    filesCreated++
+
+    // Write providers file
+    await writeFile(
+      join(projectPath, "src", "providers", "midnight.ts"),
+      `// Midnight SDK Provider Setup
+
+import type { NetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+
+export interface MidnightConfig {
+  networkId: NetworkId;
+  indexerUrl: string;
+  proofServerUrl: string;
+  nodeUrl?: string;
+}
+
+export const TESTNET_CONFIG: MidnightConfig = {
+  networkId: 'testnet' as NetworkId,
+  indexerUrl: 'https://indexer.testnet.midnight.network/graphql',
+  proofServerUrl: 'https://proof-server.testnet.midnight.network',
+  nodeUrl: 'https://rpc.testnet.midnight.network',
+};
+
+export const DEVNET_CONFIG: MidnightConfig = {
+  networkId: 'devnet' as NetworkId,
+  indexerUrl: 'http://localhost:8080/graphql',
+  proofServerUrl: 'http://localhost:6300',
+  nodeUrl: 'http://localhost:9944',
+};
+
+// Initialize providers with chosen config
+export function createProviders(config: MidnightConfig = TESTNET_CONFIG) {
+  // TODO: Initialize Midnight SDK providers
+  return {
+    config,
+    // Add provider instances here
+  };
+}
+`
+    )
+    filesCreated++
+
+    // Write package.json
+    await writeFile(
+      join(projectPath, "package.json"),
+      JSON.stringify(packageJson, null, 2)
+    )
+    filesCreated++
+
+    // Write tsconfig.json
+    await writeFile(
+      join(projectPath, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          target: "ES2022",
+          module: "ESNext",
+          moduleResolution: "bundler",
+          strict: true,
+          esModuleInterop: true,
+          skipLibCheck: true,
+          declaration: true,
+          outDir: "dist",
+          rootDir: "src",
+        },
+        include: ["src"],
+        exclude: ["node_modules", "dist"],
+      }, null, 2)
+    )
+    filesCreated++
+
+    // Write README.md
+    await writeFile(
+      join(projectPath, "README.md"),
+      `# ${projectName}
+
+A Midnight dApp built with the ${options.template} template.
+
+## Getting Started
+
+\`\`\`bash
+# Install dependencies
+pnpm install
+
+# Compile Compact contracts
+pnpm run compile
+
+# Start development server
+pnpm run dev
+\`\`\`
+
+## Project Structure
+
+- \`contracts/\` - Compact smart contracts
+- \`src/contract/\` - TypeScript contract bindings and witnesses
+- \`src/providers/\` - Midnight SDK configuration
+
+## Documentation
+
+- [Midnight Docs](https://docs.midnight.network)
+- [Compact Language Reference](https://docs.midnight.network/compact)
+`
+    )
+    filesCreated++
+
+    // Write .gitignore
+    await writeFile(
+      join(projectPath, ".gitignore"),
+      `node_modules/
+dist/
+src/contract/generated/
+.env
+.env.local
+*.log
+`
+    )
+    filesCreated++
+
+    if (includeUI) {
+      // Write main.tsx
+      await writeFile(
+        join(projectPath, "src", "main.tsx"),
+        `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+`
+      )
+      filesCreated++
+
+      // Write App.tsx
+      await writeFile(
+        join(projectPath, "src", "App.tsx"),
+        `import React from 'react';
+
+function App() {
+  return (
+    <div>
+      <h1>${projectName}</h1>
+      <p>Your Midnight dApp is ready!</p>
+    </div>
+  );
+}
+
+export default App;
+`
+      )
+      filesCreated++
+
+      // Write index.html
+      await writeFile(
+        join(projectPath, "index.html"),
+        `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${projectName}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`
+      )
+      filesCreated++
+
+      // Write vite.config.ts
+      await writeFile(
+        join(projectPath, "vite.config.ts"),
+        `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+`
+      )
+      filesCreated++
+    } else {
+      // Write src/index.ts for non-UI projects
+      await writeFile(
+        join(projectPath, "src", "index.ts"),
+        `// ${projectName} - Midnight dApp Entry Point
+
+import { createProviders, TESTNET_CONFIG } from './providers/midnight';
+
+async function main() {
+  console.log('Starting ${projectName}...');
+
+  const providers = createProviders(TESTNET_CONFIG);
+  console.log('Connected to:', providers.config.networkId);
+
+  // TODO: Add your contract interaction logic here
+}
+
+main().catch(console.error);
+`
+      )
+      filesCreated++
+    }
+
+    return { success: true, filesCreated }
+  } catch (error) {
+    return {
+      success: false,
+      filesCreated,
+      error: (error as Error).message,
+    }
+  }
 }
