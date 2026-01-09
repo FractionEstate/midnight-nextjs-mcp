@@ -2,6 +2,23 @@
 
 A Model Context Protocol (MCP) server combining Midnight Network blockchain development tools with Next.js DevTools for building decentralized applications.
 
+> **Compatible with all MCP-enabled AI assistants:** Claude, GitHub Copilot, Cursor, Windsurf, Codeium, Continue.dev, Zed, Sourcegraph Cody, and more.
+
+## 🤖 Supported AI Assistants
+
+This MCP server works with any AI assistant that supports the Model Context Protocol:
+
+| AI Assistant | Platform | Configuration |
+|--------------|----------|---------------|
+| **Claude** | Desktop App, VS Code | Native MCP support |
+| **GitHub Copilot** | VS Code, JetBrains | MCP extension |
+| **Cursor** | IDE | Built-in MCP support |
+| **Windsurf** | IDE | Built-in MCP support |
+| **Codeium** | VS Code, JetBrains | MCP integration |
+| **Continue.dev** | VS Code, JetBrains | MCP config file |
+| **Zed** | IDE | MCP support |
+| **Sourcegraph Cody** | VS Code | MCP extension |
+
 ## 🌙 Features
 
 ### Midnight Network Tools
@@ -58,9 +75,45 @@ The easiest way to use this MCP server is via npx — no installation required:
 
 ### Configuration Examples
 
-#### VS Code (Claude Extension)
+The MCP configuration format is standardized across most AI assistants. Below are platform-specific examples:
 
-Add to your VS Code `settings.json` or `.vscode/mcp.json`:
+---
+
+#### Universal MCP Configuration
+
+Most MCP clients use this standard JSON format. Add to your client's MCP configuration file:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+---
+
+#### VS Code (GitHub Copilot / Claude Extension)
+
+Add to your VS Code `settings.json` or workspace `.vscode/mcp.json`:
+
+```json
+{
+  "mcp.servers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+Or for Claude extension specifically:
 
 ```json
 {
@@ -154,6 +207,85 @@ Add to your Windsurf MCP settings:
 }
 ```
 
+---
+
+#### Continue.dev (VS Code / JetBrains)
+
+Add to `~/.continue/config.json` or your project's `.continue/config.json`:
+
+```json
+{
+  "experimental": {
+    "modelContextProtocolServers": [
+      {
+        "name": "midnight-nextjs-mcp",
+        "transport": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "midnight-nextjs-mcp@latest"]
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### Zed Editor
+
+Add to your Zed settings (`~/.config/zed/settings.json` on Linux, `~/Library/Application Support/Zed/settings.json` on macOS):
+
+```json
+{
+  "context_servers": {
+    "midnight-nextjs-mcp": {
+      "command": {
+        "path": "npx",
+        "args": ["-y", "midnight-nextjs-mcp@latest"]
+      }
+    }
+  }
+}
+```
+
+---
+
+#### Sourcegraph Cody
+
+Add to your Cody MCP configuration:
+
+```json
+{
+  "cody.experimental.mcp.servers": {
+    "midnight-nextjs-mcp": {
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+---
+
+#### JetBrains IDEs (IntelliJ, WebStorm, etc.)
+
+For AI assistants in JetBrains IDEs that support MCP, add to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"]
+    }
+  }
+}
+```
+
+---
+
 #### Using Global Installation
 
 If you prefer a global install instead of npx:
@@ -184,6 +316,24 @@ Then configure:
       "type": "stdio",
       "command": "node",
       "args": ["/path/to/midnight-nextjs-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+---
+
+#### Docker
+
+Run the MCP server in a Docker container:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "fractionestate/midnight-nextjs-mcp:latest"]
     }
   }
 }
@@ -253,6 +403,26 @@ midnight-nextjs-mcp/
 
 ### Environment Variables
 
+You can pass environment variables to the MCP server in your configuration:
+
+```json
+{
+  "mcpServers": {
+    "midnight-nextjs-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "midnight-nextjs-mcp@latest"],
+      "env": {
+        "MIDNIGHT_NETWORK": "testnet",
+        "MIDNIGHT_INDEXER_URL": "https://indexer.testnet.midnight.network/graphql"
+      }
+    }
+  }
+}
+```
+
+#### Available Environment Variables
+
 ```bash
 # Midnight Network (optional, defaults to testnet)
 MIDNIGHT_NETWORK=testnet
@@ -302,6 +472,15 @@ pnpm build
 - [Midnight Network Docs](https://docs.midnight.network)
 - [Next.js Docs](https://nextjs.org/docs)
 - [MCP Specification](https://modelcontextprotocol.io)
+- [MCP Server Registry](https://github.com/modelcontextprotocol/servers)
+
+### Client-Specific MCP Documentation
+
+- [Claude Desktop MCP Guide](https://docs.anthropic.com/en/docs/claude-mcp)
+- [VS Code MCP Extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-mcp)
+- [Cursor MCP Docs](https://docs.cursor.com/context/model-context-protocol)
+- [Continue.dev MCP Guide](https://docs.continue.dev/customization/context-providers#mcp-servers)
+- [Zed MCP Documentation](https://zed.dev/docs/assistant/context-servers)
 
 ## 🤝 Contributing
 
